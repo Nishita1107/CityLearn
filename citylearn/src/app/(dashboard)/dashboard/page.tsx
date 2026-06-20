@@ -360,21 +360,6 @@ export default function Page() {
       
       <div className="space-y-8 max-w-7xl mx-auto">
         
-        {/* Top Header Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-border p-6 rounded-2xl shadow-sm">
-          <div>
-            <h1 className="text-xl font-bold font-merriweather text-foreground">Traffic Command Center</h1>
-            <p className="text-xs text-muted-foreground font-sans mt-1">Real-time event monitoring & institutional learning</p>
-          </div>
-          <button
-            onClick={downloadDashboardReport}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-dark font-semibold rounded-xl text-xs border border-primary/20 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-sm">download</span>
-            Download City Report
-          </button>
-        </div>
-
         {/* Hero Section */}
         <section 
           id="dashboard-hero" 
@@ -395,6 +380,21 @@ export default function Page() {
             </p>
           </div>
         </section>
+
+        {/* Top Header Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-border p-6 rounded-2xl shadow-sm">
+          <div>
+            <h1 className="text-xl font-bold font-merriweather text-foreground">Traffic Command Center</h1>
+            <p className="text-xs text-muted-foreground font-sans mt-1">Real-time event monitoring & institutional learning</p>
+          </div>
+          <button
+            onClick={downloadDashboardReport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-dark font-semibold rounded-xl text-xs border border-primary/20 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">download</span>
+            Download City Report
+          </button>
+        </div>
 
         {/* Stats Row */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
