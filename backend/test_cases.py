@@ -96,7 +96,7 @@ def run_tests():
         "closure_status": "No Closure"
     }
 
-    # Case 5: Attendance: 100000 — base 25 officers (25 per 100k attendees)
+    # Case 5: Attendance: 100000 — 203 officers (1 per 500 attendees + 3 baseline)
     payload_case100k = {
         "event_type": "Public Assembly",
         "event_cause": "Others",
@@ -149,7 +149,7 @@ def run_tests():
     assert res1["recommended_manpower"] < res2["recommended_manpower"], "Error: Recommended officers count did not increase with attendance!"
     assert res3["manpower_diversion_score"] < res2["manpower_diversion_score"], "Error: Manpower score did not decrease for a far location!"
     assert res0["recommended_manpower"] == 0, f"Error: Zero attendance should recommend 0 officers, got {res0['recommended_manpower']}!"
-    assert res100k["recommended_manpower"] == 25, f"Error: 100k attendance should recommend 25 base officers, got {res100k['recommended_manpower']}!"
+    assert res100k["recommended_manpower"] == 203, f"Error: 100k attendance should recommend 203 base officers, got {res100k['recommended_manpower']}!"
     
     print("\n" + "="*40)
     print("=== ALL IMPLEMENTATION TESTS PASSED SUCCESSFULLY! ===")

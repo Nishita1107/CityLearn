@@ -73,6 +73,67 @@ def get_attendance_and_duration(payload: EventInput) -> Tuple[int, int]:
                 
     return attendance, duration
 
+def calculate_practical_manpower(
+    event_type: str,
+    event_cause: str,
+    attendance: int,
+    requires_road_closure: bool,
+    priority: str,
+    avg_resolution: float = 0.0
+) -> int:
+    attendance = attendance or 0
+    et = str(event_type).strip().lower()
+    cause = str(event_cause).strip().lower()
+    prio = str(priority).strip().lower() if priority else "low"
+    
+    # If it's a public assembly / planned event and no one is attending, no officers needed
+    if et in ['public assembly', 'planned'] and attendance == 0:
+        return 0
+        
+    # 1. Baseline officers based on cause
+    cause_baselines = {
+        'accident': 3,
+        'protest': 10,
+        'rally': 12,
+        'water_logging': 4,
+        'tree_fall': 3,
+        'hoarding_fall': 3,
+        'bmtc_breakdown': 2,
+        'vehicle_breakdown': 2,
+        'road_conditions': 2,
+        'drainage_overflow': 2
+    }
+    
+    type_baselines = {
+        'unplanned': 3,
+        'transit surge': 4,
+        'infrastructure failure': 4,
+        'dynamic maintenance': 2,
+        'public assembly': 3,
+        'planned': 2
+    }
+    
+    base_from_cause = cause_baselines.get(cause, 2)
+    base_from_type = type_baselines.get(et, 2)
+    baseline = max(base_from_cause, base_from_type)
+    
+    # 2. Scaling with attendance (1 officer per 500 attendees)
+    attendance_officers = math.ceil(attendance / 500)
+    
+    # 3. Road closure adjustment (requires physical presence at closure/diversion points)
+    closure_bonus = 6 if requires_road_closure else 0
+    
+    # 4. Priority/Severity adjustment
+    priority_bonus = 4 if prio == 'high' else 0
+    
+    # 5. Long duration adjustment
+    resolution_bonus = 3 if avg_resolution > 150 else 0
+    
+    total = baseline + attendance_officers + closure_bonus + priority_bonus + resolution_bonus
+    
+    return max(1, total)
+
+
 def get_coordinates(payload: EventInput) -> Tuple[float, float]:
     lat = payload.latitude
     lon = payload.longitude
@@ -370,11 +431,14 @@ def build_recommendations(payload: EventInput, predictions: Dict[str, Any], simi
     if durations:
         avg_resolution = sum(durations) / len(durations)
 
-    if attendance == 0:
-        officers = 0
-    else:
-        officers = math.ceil(attendance / 4000) + (2 if closure_required else 0) + (2 if high_priority else 0) + (1 if avg_resolution > 150 else 0)
-        officers = max(1, officers)
+    officers = calculate_practical_manpower(
+        payload.event_type,
+        payload.event_cause or "Unknown",
+        attendance,
+        closure_required,
+        predictions["severity_level"],
+        avg_resolution
+    )
     corridor = payload.corridor if payload.corridor and payload.corridor != "Unknown" else (similar_events[0]["location"] if similar_events else "input corridor")
     zone = payload.zone if payload.zone and payload.zone != "Unknown" else corridor
     similar_count = len(similar_events)
@@ -771,11 +835,13 @@ def predict_manpower(payload: EventInput):
 
         # Personnel recommendation
         attendance, duration = get_attendance_and_duration(payload)
-        if attendance == 0:
-            recommended_manpower = 0
-        else:
-            recommended_manpower = math.ceil(attendance / 4000) + (2 if rc else 0) + (2 if prio_cleaned == 'high' else 0)
-            recommended_manpower = max(1, recommended_manpower)
+        recommended_manpower = calculate_practical_manpower(
+            payload.event_type,
+            payload.event_cause or "Unknown",
+            attendance,
+            rc,
+            prio_cleaned
+        )
 
         # Suggested diversion
         # Override corridor name with structured location if available
@@ -1215,11 +1281,13 @@ def get_strategic_recommendations(payload: EventInput):
                 
         attendance, duration = get_attendance_and_duration(payload)
         
-        if attendance == 0:
-            officers = 0
-        else:
-            officers = math.ceil(attendance / 4000) + (2 if rc else 0) + (2 if prio == "High" else 0)
-            officers = max(1, officers)
+        officers = calculate_practical_manpower(
+            payload.event_type,
+            payload.event_cause or "Unknown",
+            attendance,
+            rc,
+            prio
+        )
         
         zone = payload.zone if payload.zone and payload.zone != "Unknown" else payload.corridor
         corridor = payload.corridor if payload.corridor and payload.corridor != "Unknown" else payload.zone
