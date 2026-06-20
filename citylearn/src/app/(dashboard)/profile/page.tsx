@@ -10,7 +10,6 @@ export default function Page() {
   const [editForm, setEditForm] = useState({
     name: "",
     email: "",
-    address: "",
     department: "",
     role: "",
     country: "",
@@ -27,7 +26,6 @@ export default function Page() {
           setEditForm({
             name: data.user.name || "",
             email: data.user.email || "",
-            address: data.user.address || "",
             department: data.user.department || "",
             role: data.user.role || "",
             country: data.user.country || "",
@@ -131,7 +129,6 @@ export default function Page() {
       alert("An error occurred. Please try again.");
     }
   };
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -141,254 +138,126 @@ export default function Page() {
         }
       ` }} />
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
         
         {/* Header Section */}
-        <div className="space-y-1">
+        <div className="space-y-1 text-center md:text-left">
           <h1 className="page-heading text-foreground">
-            User Profile
+            Account Profile
           </h1>
           <p className="text-muted-foreground text-sm max-w-xl">
-            Manage your credentials, view operational statistics, and check verification status.
+            Manage your personal profile and account security settings.
           </p>
         </div>
 
-        {/* Hero Section & Quick Actions */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Profile Information */}
+        <div className="bg-white border border-border shadow-sm rounded-2xl p-8 space-y-8">
           
-          <div className="lg:col-span-2 bg-white border border-border shadow-sm rounded-2xl p-8 relative overflow-hidden flex items-center">
-            <div className="flex flex-col md:flex-row items-center md:items-center gap-6 relative z-10 w-full">
-              
-              {/* Profile Image */}
-              <div className="relative">
-                <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl overflow-hidden border border-border shadow-sm bg-slate-50 flex items-center justify-center">
-                  {user?.name ? (
-                    <div className={`w-full h-full bg-gradient-to-br ${getAvatarBg(user.name)} text-white flex items-center justify-center text-4xl font-extrabold select-none`}>
-                      {getInitials(user.name)}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full bg-slate-100 animate-pulse" />
-                  )}
-                </div>
-                <button 
-                  onClick={() => setIsEditOpen(true)}
-                  className="absolute -bottom-2 -right-2 w-9 h-9 bg-primary text-white rounded-lg shadow-sm flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                >
-                  <span className="material-symbols-outlined text-[18px]">edit</span>
-                </button>
-              </div>
-
-              {/* User Metadata */}
-              <div className="text-center md:text-left space-y-2 flex-grow">
-                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">{user?.name || (loading ? "Loading..." : "Guest")}</h2>
-                <p className="text-muted-foreground text-sm">
-                  {user?.role || (loading ? "Loading..." : "Operator")} • {user?.department || (loading ? "Loading..." : "Operations")}
-                </p>
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-2 border-t border-slate-100">
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">location_on</span> {user?.city ? `${user.city}, ${user.state || ""}`.trim() : (loading ? "Loading..." : "Unknown Location")}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">mail</span> {user?.email || (loading ? "Loading..." : "No Email")}
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Quick Actions Panel (1 Column) */}
-          <div className="bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col justify-between">
-            <div>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6 flex items-center justify-between">
-                Quick Actions
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              </h3>
-              
-              <div className="space-y-3">
-                <button 
-                  onClick={() => setIsEditOpen(true)}
-                  className="w-full group flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100/70 border border-border rounded-xl transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary text-lg">person_edit</span>
-                    <span className="text-xs font-bold text-foreground">Edit Profile</span>
-                  </div>
-                  <span className="material-symbols-outlined text-muted-foreground text-base group-hover:translate-x-1 transition-transform">chevron_right</span>
-                </button>
-                
-                <button 
-                  onClick={handleDeleteProfile}
-                  className="w-full group flex items-center justify-between p-3.5 bg-red-50 hover:bg-red-100/70 border border-red-200 rounded-xl transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-red-600 text-lg">delete</span>
-                    <span className="text-xs font-bold text-red-600">Delete Profile</span>
-                  </div>
-                  <span className="material-symbols-outlined text-red-600 text-base group-hover:translate-x-1 transition-transform">chevron_right</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Account Health</span>
-                <span className="text-xs font-bold text-primary font-mono">98% Secure</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: "98%" }}></div>
-              </div>
-            </div>
-          </div>
-
-        </section>
-
-        {/* Stats Grid */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          
-          {/* Card 1 */}
-          <div className="bg-white border border-border shadow-sm p-6 rounded-xl hover:border-primary/20 transition-colors">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Events Analyzed</p>
-            <h4 className="text-2xl font-bold text-primary font-mono">12,482</h4>
-            <p className="text-[10px] text-green-600 font-semibold mt-2 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">trending_up</span> +12% this month
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-white border border-border shadow-sm p-6 rounded-xl hover:border-secondary/20 transition-colors">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Predictions</p>
-            <h4 className="text-2xl font-bold text-secondary font-mono">842</h4>
-            <p className="text-[10px] text-primary/70 font-semibold mt-2 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">check_circle</span> 94% Accuracy
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-white border border-border shadow-sm p-6 rounded-xl hover:border-amber-400/50 transition-colors">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Approved Actions</p>
-            <h4 className="text-2xl font-bold text-amber-600 font-mono">319</h4>
-            <p className="text-[10px] text-amber-700 font-semibold mt-2 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">bolt</span> High Impact Rank
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="bg-white border border-border shadow-sm p-6 rounded-xl hover:border-slate-300 transition-colors">
-            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Simulations</p>
-            <h4 className="text-2xl font-bold text-foreground font-mono">56</h4>
-            <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">timer</span> 4.2h Avg/Week
-            </p>
-          </div>
-
-        </section>
-
-        {/* Charts & Activities */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Performance Chart (2 Columns) */}
-          <div className="lg:col-span-2 bg-white border border-border shadow-sm p-8 rounded-xl">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Impact Velocity</h3>
-                <p className="text-muted-foreground text-xs">Quantifying operational efficiency over the last 30 days.</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono">Active Output</span>
-              </div>
-            </div>
-
-            {/* SVG Chart Area */}
-            <div className="h-60 w-full relative">
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 200">
-                <defs>
-                  <linearGradient id="profileChartGrad" x1="0%" x2="0%" y1="0%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.15"></stop>
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0"></stop>
-                  </linearGradient>
-                </defs>
-                {/* Horizontal reference lines */}
-                <line stroke="rgba(0,0,0,0.05)" strokeWidth="1" x1="0" x2="800" y1="50" y2="50"></line>
-                <line stroke="rgba(0,0,0,0.05)" strokeWidth="1" x1="0" x2="800" y1="100" y2="100"></line>
-                <line stroke="rgba(0,0,0,0.05)" strokeWidth="1" x1="0" x2="800" y1="150" y2="150"></line>
-                
-                {/* Area path */}
-                <path d="M0,180 Q100,160 200,120 T400,100 T600,140 T800,40 L800,200 L0,200 Z" fill="url(#profileChartGrad)"></path>
-                
-                {/* Line path */}
-                <path d="M0,180 Q100,160 200,120 T400,100 T600,140 T800,40" fill="none" stroke="hsl(var(--primary))" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
-                
-                {/* Reference dots */}
-                <circle cx="200" cy="120" fill="hsl(var(--primary))" r="4" className="ring-4 ring-primary/20"></circle>
-                <circle cx="800" cy="40" fill="hsl(var(--primary))" r="4" className="ring-4 ring-primary/20"></circle>
-              </svg>
-              
-              {/* X Axis labels */}
-              <div className="flex justify-between mt-4 text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
-                <span>Wk 01</span>
-                <span>Wk 02</span>
-                <span>Wk 03</span>
-                <span>Wk 04 (Current)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity Feed (1 Column) */}
-          <div className="bg-white border border-border shadow-sm p-8 rounded-xl flex flex-col justify-between">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Recent Activity</h3>
+          {/* Avatar and Info Row */}
+          <div className="flex flex-col md:flex-row items-center gap-6 pb-6 border-b border-slate-100">
             
-            <div className="space-y-6 flex-grow">
-              
-              {/* Activity 1 */}
-              <div className="flex gap-4">
-                <div className="relative flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center border border-secondary/20">
-                    <span className="material-symbols-outlined text-base">hub</span>
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-28 h-28 rounded-2xl overflow-hidden border border-border shadow-sm flex items-center justify-center bg-slate-50">
+                {user?.name ? (
+                  <div className={`w-full h-full bg-gradient-to-br ${getAvatarBg(user.name)} text-white flex items-center justify-center text-3xl font-extrabold select-none`}>
+                    {getInitials(user.name)}
                   </div>
-                  <div className="w-px h-8 bg-slate-100 mt-2"></div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Simulation Approved</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight">L-9 Urban Corridor Optimization</p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono mt-1">2 hours ago</p>
-                </div>
+                ) : (
+                  <div className="w-full h-full bg-slate-100 animate-pulse" />
+                )}
               </div>
+            </div>
 
-              {/* Activity 2 */}
-              <div className="flex gap-4">
-                <div className="relative flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-                    <span className="material-symbols-outlined text-base">analytics</span>
-                  </div>
-                  <div className="w-px h-8 bg-slate-100 mt-2"></div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Dataset Analysis Complete</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight">SF Transit Grid (Batch #442)</p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono mt-1">5 hours ago</p>
-                </div>
+            {/* User Metadata */}
+            <div className="text-center md:text-left space-y-2 flex-grow">
+              <h2 className="font-display text-2xl font-bold text-foreground leading-tight">
+                {user?.name || (loading ? "Loading..." : "Guest")}
+              </h2>
+              <p className="text-muted-foreground text-sm font-semibold">
+                {user?.role || "Operator"} • {user?.department || "Operations"}
+              </p>
+              <div className="flex flex-col md:flex-row md:items-center gap-y-1 gap-x-4 text-xs text-muted-foreground pt-1.5 border-t border-slate-50">
+                <span className="flex items-center justify-center md:justify-start gap-1">
+                  <span className="material-symbols-outlined text-sm">mail</span> {user?.email || "No Email"}
+                </span>
+                <span className="flex items-center justify-center md:justify-start gap-1">
+                  <span className="material-symbols-outlined text-sm">location_on</span> {user?.city ? `${user.city}, ${user.state || ""}`.trim() : "Unknown Location"}
+                </span>
               </div>
-
-              {/* Activity 3 */}
-              <div className="flex gap-4">
-                <div>
-                  <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
-                    <span className="material-symbols-outlined text-base">notifications_active</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-foreground">Security Alert Handled</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight">API Gateway unauthorized attempt</p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono mt-1">Yesterday</p>
-                </div>
-              </div>
-
             </div>
           </div>
 
-        </section>
+          {/* Basic Account Details Grid */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Account Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="flex justify-between p-3 bg-slate-50/50 border border-border/60 rounded-xl">
+                <span className="text-muted-foreground font-semibold">Department</span>
+                <span className="text-foreground font-bold">{user?.department || "N/A"}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50/50 border border-border/60 rounded-xl">
+                <span className="text-muted-foreground font-semibold">Role</span>
+                <span className="text-foreground font-bold">{user?.role || "N/A"}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50/50 border border-border/60 rounded-xl">
+                <span className="text-muted-foreground font-semibold">Country</span>
+                <span className="text-foreground font-bold">{user?.country || "N/A"}</span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50/50 border border-border/60 rounded-xl">
+                <span className="text-muted-foreground font-semibold">State</span>
+                <span className="text-foreground font-bold">{user?.state || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Edit Profile */}
+        <div className="bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Edit Profile</h3>
+            <p className="text-xs text-muted-foreground">Update your personal information and contact details.</p>
+          </div>
+          <button 
+            onClick={() => setIsEditOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-base">person_edit</span>
+            Edit Profile
+          </button>
+        </div>
+
+        {/* Delete Profile */}
+        <div className="bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Delete Profile</h3>
+            <p className="text-xs text-muted-foreground">Permanently delete your account and all associated data.</p>
+          </div>
+          <button 
+            onClick={handleDeleteProfile}
+            className="w-full sm:w-auto px-5 py-2.5 bg-red-50 hover:bg-red-100/70 border border-red-200 rounded-xl text-xs font-bold text-red-600 active:scale-95 transition-all flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-base">delete</span>
+            Delete Profile
+          </button>
+        </div>
+
+        {/* Account Health */}
+        <div className="bg-white border border-border shadow-sm rounded-2xl p-6 space-y-4">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Account Health</h3>
+            <p className="text-xs text-muted-foreground">Ensure your account security requirements are met.</p>
+          </div>
+          <div className="p-5 bg-slate-50 border border-border rounded-xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Security Score</span>
+              <span className="text-xs font-bold text-primary font-mono">98% Secure</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full" style={{ width: "98%" }}></div>
+            </div>
+          </div>
+        </div>
 
       </div>
 
@@ -426,15 +295,6 @@ export default function Page() {
                     required
                     value={editForm.email}
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                    className="w-full bg-slate-50 border border-border rounded-lg p-2.5 text-sm text-foreground focus:bg-white focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Address</label>
-                  <input 
-                    type="text"
-                    value={editForm.address}
-                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     className="w-full bg-slate-50 border border-border rounded-lg p-2.5 text-sm text-foreground focus:bg-white focus:border-primary focus:outline-none"
                   />
                 </div>

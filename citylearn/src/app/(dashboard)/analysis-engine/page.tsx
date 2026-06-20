@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Country, State, City } from "country-state-city";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { getApiBaseUrl, storeAnalysis } from "@/lib/analysis";
+import { getApiBaseUrl, storeAnalysis, loadUnifiedAnalysis } from "@/lib/analysis";
 
 export default function Page() {
   // 1. Form States
@@ -506,181 +506,191 @@ export default function Page() {
         {/* Page Header */}
         <div className="space-y-1">
           <h1 className="page-heading text-foreground">Analyze New Event</h1>
-          <p className="text-muted-foreground text-sm max-w-lg">Input urban dynamics to trigger CityLearn’s signature recognition and similarity mapping engine.</p>
+          <p className="text-muted-foreground text-sm max-w-lg">Input urban dynamics to trigger <span className="citylearn-brand">CityLearn</span>’s signature recognition and similarity mapping engine.</p>
         </div>
 
         {/* Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
           
           {/* Left Column: Event Form */}
-          <section className="space-y-6">
+          <section className="space-y-6 flex flex-col h-full">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest h-5 flex items-center">
+              Event Inputs
+            </h2>
             
             {/* Form Card */}
-            <form className="bg-white border border-border shadow-sm rounded-2xl p-8 space-y-6 relative overflow-hidden group">
+            <form className="bg-white border border-border shadow-sm rounded-2xl p-8 relative overflow-hidden group flex-grow flex flex-col justify-between">
               <div className="scanning-line opacity-10"></div>
               
-              {/* Row 1: Event Type | Country */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Event Type</label>
-                  <div className="relative">
-                    <select 
-                      value={eventType}
-                      onChange={(e) => setEventType(e.target.value)}
-                      className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all appearance-none"
-                    >
-                      <option>Public Assembly</option>
-                      <option>Infrastructure Failure</option>
-                      <option>Transit Surge</option>
-                      <option>Dynamic Maintenance</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
-                  </div>
-                </div>
+              {/* Form Content Wrapper */}
+              <div className="space-y-6 flex-grow flex flex-col justify-around">
                 
-                {/* Country Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Country</label>
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full bg-muted/20 border border-border rounded-lg p-3 text-sm text-foreground outline-none transition-all flex items-center justify-between text-left h-[48px] opacity-75 cursor-not-allowed"
-                  >
-                    <span className="truncate flex-grow pr-2">India</span>
-                    <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">lock</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Row 2: State | City */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* State Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">State/Region</label>
-                  <button
-                    type="button"
-                    disabled
-                    className="w-full bg-muted/20 border border-border rounded-lg p-3 text-sm text-foreground outline-none transition-all flex items-center justify-between text-left h-[48px] opacity-75 cursor-not-allowed"
-                  >
-                    <span className="truncate flex-grow pr-2">Karnataka</span>
-                    <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">lock</span>
-                  </button>
-                </div>
-
-                {/* City Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">City</label>
-                  <Popover open={cityOpen} onOpenChange={setCityOpen}>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        disabled={isCityDisabled}
-                        className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all flex items-center justify-between text-left h-[48px] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/10"
+                {/* Row 1: Event Type | Country */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Event Type</label>
+                    <div className="relative">
+                      <select 
+                        value={eventType}
+                        onChange={(e) => setEventType(e.target.value)}
+                        className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all appearance-none"
                       >
-                        <span className="truncate flex-grow pr-2">{selectedCity || "Select City..."}</span>
-                        <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">expand_more</span>
-                      </button>
-                    </PopoverTrigger>
-                    {!isCityDisabled && (
-                      <PopoverContent className="bg-white border border-border shadow-lg max-h-[280px] overflow-hidden rounded-lg w-[var(--radix-popover-trigger-width)] p-0 z-50">
-                        <Command>
-                          <CommandInput 
-                            placeholder="Search city..." 
-                            value={citySearch} 
-                            onValueChange={setCitySearch} 
-                          />
-                          <CommandList>
-                            <CommandEmpty>No city found.</CommandEmpty>
-                            <CommandGroup className="max-h-[200px] overflow-y-auto">
-                              {filteredCities.map((city, idx) => (
-                                <CommandItem
-                                  key={`${city.name}-${idx}`}
-                                  value={city.name}
-                                  onSelect={() => {
-                                    setSelectedCity(city.name);
-                                    setCityOpen(false);
-                                    setCitySearch("");
-                                  }}
-                                  className="cursor-pointer hover:bg-muted/50 p-2 text-sm rounded-md"
-                                >
-                                  {city.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    )}
-                  </Popover>
-                </div>
-              </div>
-
-              {/* Location Restriction Footnote */}
-              <p className="text-[11px] text-muted-foreground italic -mt-2 mb-2 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">info</span>
-                Note: The current dataset and analytics are limited to Karnataka (Bangalore) only.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Duration (Est.)</label>
-                  <div className="flex gap-2">
-                    <input 
-                      value={duration}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setDuration(val === "" ? "" : Number(val));
-                      }}
-                      className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all" 
-                      type="number"
-                      min="0"
-                    />
-                    <span className="flex items-center px-3 text-[10px] font-bold text-muted-foreground bg-muted border border-border rounded-lg uppercase">Min</span>
+                        <option>Public Assembly</option>
+                        <option>Infrastructure Failure</option>
+                        <option>Transit Surge</option>
+                        <option>Dynamic Maintenance</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Closure Status</label>
-                  <div className="relative">
-                    <select 
-                      value={closureStatus}
-                      onChange={(e) => setClosureStatus(e.target.value)}
-                      className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all appearance-none h-[48px]"
+                  
+                  {/* Country Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Country</label>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full bg-muted/20 border border-border rounded-lg p-3 text-sm text-foreground outline-none transition-all flex items-center justify-between text-left h-[48px] opacity-75 cursor-not-allowed"
                     >
-                      <option value="No Closure">No Closure</option>
-                      <option value="Partial Closure">Partial Closure</option>
-                      <option value="Full Closure">Full Closure</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
+                      <span className="truncate flex-grow pr-2">India</span>
+                      <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">lock</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: State | City */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* State Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">State/Region</label>
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full bg-muted/20 border border-border rounded-lg p-3 text-sm text-foreground outline-none transition-all flex items-center justify-between text-left h-[48px] opacity-75 cursor-not-allowed"
+                    >
+                      <span className="truncate flex-grow pr-2">Karnataka</span>
+                      <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">lock</span>
+                    </button>
+                  </div>
+
+                  {/* City Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">City</label>
+                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={isCityDisabled}
+                          className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all flex items-center justify-between text-left h-[48px] disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/10"
+                        >
+                          <span className="truncate flex-grow pr-2">{selectedCity || "Select City..."}</span>
+                          <span className="material-symbols-outlined text-muted-foreground shrink-0 text-base">expand_more</span>
+                        </button>
+                      </PopoverTrigger>
+                      {!isCityDisabled && (
+                        <PopoverContent className="bg-white border border-border shadow-lg max-h-[280px] overflow-hidden rounded-lg w-[var(--radix-popover-trigger-width)] p-0 z-50">
+                          <Command>
+                            <CommandInput 
+                              placeholder="Search city..." 
+                              value={citySearch} 
+                              onValueChange={setCitySearch} 
+                            />
+                            <CommandList>
+                              <CommandEmpty>No city found.</CommandEmpty>
+                              <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                {filteredCities.map((city, idx) => (
+                                  <CommandItem
+                                    key={`${city.name}-${idx}`}
+                                    value={city.name}
+                                    onSelect={() => {
+                                      setSelectedCity(city.name);
+                                      setCityOpen(false);
+                                      setCitySearch("");
+                                    }}
+                                    className="cursor-pointer hover:bg-muted/50 p-2 text-sm rounded-md"
+                                  >
+                                    {city.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      )}
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* Location Restriction Footnote */}
+                <p className="text-[11px] text-muted-foreground italic -mt-2 mb-2 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">info</span>
+                  Note: The current dataset and analytics are limited to Karnataka (Bangalore) only.
+                </p>
+
+                {/* Row 3: Duration | Closure Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Duration (Est.)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        value={duration}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setDuration(val === "" ? "" : Number(val));
+                        }}
+                        className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all" 
+                        type="number"
+                        min="0"
+                      />
+                      <span className="flex items-center px-3 text-[10px] font-bold text-muted-foreground bg-muted border border-border rounded-lg uppercase">Min</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Closure Status</label>
+                    <div className="relative">
+                      <select 
+                        value={closureStatus}
+                        onChange={(e) => setClosureStatus(e.target.value)}
+                        className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm text-foreground focus:border-primary focus:bg-white outline-none transition-all appearance-none h-[48px]"
+                      >
+                        <option value="No Closure">No Closure</option>
+                        <option value="Partial Closure">Partial Closure</option>
+                        <option value="Full Closure">Full Closure</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none text-base">expand_more</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4: Attendance Estimate Slider */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Attendance Estimate</label>
+                    <span className="text-xs font-mono font-bold text-primary">{getAttendanceDisplay(attendance)}</span>
+                  </div>
+                  <input 
+                    value={attendance}
+                    onChange={(e) => setAttendance(Number(e.target.value))}
+                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary" 
+                    type="range" 
+                    min="0"
+                    max="5"
+                    step="0.01"
+                  />
+                  <div className="flex justify-between font-mono text-[9px] text-muted-foreground uppercase">
+                    <span>0</span>
+                    <span>1K</span>
+                    <span>10K</span>
+                    <span>50K</span>
+                    <span>100K</span>
+                    <span>100K+</span>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-baseline mb-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Attendance Estimate</label>
-                  <span className="text-xs font-mono font-bold text-primary">{getAttendanceDisplay(attendance)}</span>
-                </div>
-                <input 
-                  value={attendance}
-                  onChange={(e) => setAttendance(Number(e.target.value))}
-                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary" 
-                  type="range" 
-                  min="0"
-                  max="5"
-                  step="0.01"
-                />
-                <div className="flex justify-between font-mono text-[9px] text-muted-foreground uppercase">
-                  <span>0</span>
-                  <span>1K</span>
-                  <span>10K</span>
-                  <span>50K</span>
-                  <span>100K</span>
-                  <span>100K+</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
+              {/* Submit button pushed to bottom */}
+              <div className="pt-6 mt-auto">
                 <button 
                   onClick={handleSubmit}
                   disabled={isLoading}
@@ -722,11 +732,9 @@ export default function Page() {
           {/* Right Column: Visualization & Results */}
           <section className="space-y-6 flex flex-col h-full">
             
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                {results ? "Synthesis Result Output" : "Signature Recognition"}
-              </h2>
-            </div>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest h-5 flex items-center">
+              {results ? "Synthesis Result Output" : "Signature Recognition"}
+            </h2>
 
             {/* Signature Canvas */}
             <div className="bg-white border border-border rounded-xl relative p-8 flex flex-col items-center justify-center overflow-hidden shadow-sm flex-1">
@@ -741,7 +749,7 @@ export default function Page() {
               {!isLoading && !results && (
                 <div className="relative z-10 w-full max-w-md space-y-6">
                   <div className="text-center space-y-1">
-                    <h3 className="font-display text-xl font-bold text-foreground">CityLearn Signature</h3>
+                    <h3 className="font-display text-xl font-bold text-foreground"><span className="citylearn-brand">CityLearn</span> Signature</h3>
                     <p className="text-xs text-muted-foreground">Submit the synthesis to compute operational metrics.</p>
                   </div>
                   

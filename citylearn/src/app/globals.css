@@ -88,6 +88,10 @@
   @apply shadow-md border-primary/20;
 }
 
+.citylearn-brand {
+  font-family: var(--font-croissant-one), 'Croissant One', cursive !important;
+}
+
 /* Page heading typography standardization */
 .page-heading {
   font-family: 'Merriweather', Georgia, serif;

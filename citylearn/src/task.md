@@ -1,0 +1,10 @@
+- [x] Simplify User Profile page UI components (remove predictions, analytics, event analysis, approved actions, simulations, impact velocity, recent tags, recent activity).
+- [x] Redesign layout to stack vertically as requested: Profile Information, Edit Profile, Delete Profile, Account Health.
+- [x] Ensure Edit Profile, Delete Profile, and Account Health security scores remain fully functional.
+- [x] Remove address option display and inputs completely from User Profile page and edit modal.
+- [x] Reduce height and container footprint of Neural Analysis box on strategic recommendations page.
+- [x] Place Impact Score and Efficiency Gains below the Neural Analysis container in a clean 2-column grid.
+- [x] Overhaul Similar Events page to enable selection and fix Similarity Radar rendering/clipping.
+- [x] Implement Sign Out button in desktop/mobile sidebars and enforce authentication middleware route protection.
+- [x] Copy and integrate CityLearn PNG logo asset into Sign In page, Sign Up page, Sidebar, and Mobile Drawer headers.
+- [x] Verify production Next.js build compilation.

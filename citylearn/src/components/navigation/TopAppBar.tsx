@@ -3,9 +3,10 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Search, Bell, Menu, X, UserCircle, BrainCircuit } from "lucide-react";
+import { Search, Menu, X, UserCircle, BrainCircuit, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { navItems } from "./SideNavBar";
 
@@ -26,6 +27,25 @@ export default function TopAppBar() {
       })
       .catch((err) => console.error("Error fetching user in TopAppBar:", err));
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST"
+      });
+      if (response.ok) {
+        localStorage.clear();
+        sessionStorage.clear();
+        alert("Successfully Signed Out");
+        window.location.href = "/sign-in";
+      } else {
+        alert("Failed to sign out. Please try again.");
+      }
+    } catch (err) {
+      console.error("Sign out error:", err);
+      alert("An error occurred during sign out.");
+    }
+  };
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -57,15 +77,6 @@ export default function TopAppBar() {
         {/* Header Actions */}
         <div className="flex items-center gap-2 sm:gap-4">
           
-          {/* Notification Bell */}
-          <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-white" />
-          </Button>
-
-          {/* Divider */}
-          <div className="h-4 w-px bg-border mx-0.5 sm:mx-1" />
-
           {/* Clock & Calendar */}
           <div className="flex items-center gap-1 sm:gap-2 pl-1 sm:pl-2">
             <div className="text-right">
@@ -102,11 +113,15 @@ export default function TopAppBar() {
           </button>
           
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <BrainCircuit className="text-primary w-5 h-5" />
-            </div>
+            <Image
+              src="/images/logo.png"
+              alt="CityLearn Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain shrink-0"
+            />
             <div>
-              <h2 className="font-croissant font-bold tracking-tight text-lg text-foreground">CityLearn</h2>
+              <h2 className="citylearn-brand font-bold tracking-tight text-lg text-foreground">CityLearn</h2>
               <p className="text-[10px] uppercase text-muted-foreground tracking-widest font-semibold">Institutional Memory</p>
             </div>
           </div>
@@ -133,23 +148,33 @@ export default function TopAppBar() {
         </nav>
 
         {/* Drawer Footer / User Profile Section */}
-        <div className="p-4 border-t border-border bg-white shrink-0">
+        <div className="p-4 border-t border-border bg-white shrink-0 space-y-3">
+          <div className="px-3">
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">My Account</p>
+          </div>
           <Link 
             href="/profile"
             onClick={() => setIsOpen(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-muted/30 hover:bg-muted transition-all",
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-muted/30 hover:bg-muted transition-all",
               pathname === "/profile" && "border-primary/30 bg-primary/5 text-primary"
             )}
           >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserCircle className="text-primary w-6 h-6" />
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <UserCircle className="text-primary w-5 h-5" />
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-bold text-foreground truncate">{user?.name || "Guest"}</p>
               <p className="text-[10px] text-muted-foreground truncate uppercase font-semibold">{user?.city || "Location"}</p>
             </div>
           </Link>
+          <button 
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition-all font-bold text-xs text-left cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 text-red-600" />
+            <span className="font-sans">Sign Out</span>
+          </button>
         </div>
       </div>
     </>

@@ -2,19 +2,40 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { loadUnifiedAnalysis } from "@/lib/analysis";
+import { loadUnifiedAnalysis, fetchDashboardMetrics } from "@/lib/analysis";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell
+} from "recharts";
 
 export default function Page() {
   const [metrics, setMetrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [activeTrendTab, setActiveTrendTab] = useState<"daily" | "category">("daily");
   const leafletMapInstanceRef = useRef<any>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const analysis = await loadUnifiedAnalysis();
-        setMetrics(analysis?.dashboard_metrics || null);
+        const [analysis, dbData] = await Promise.all([
+          loadUnifiedAnalysis(),
+          fetchDashboardMetrics()
+        ]);
+        
+        const combined = {
+          ...dbData,
+          ...(analysis?.dashboard_metrics || {})
+        };
+        setMetrics(combined);
       } catch (err) {
         console.error("Failed to fetch dashboard metrics:", err);
       } finally {
@@ -36,6 +57,7 @@ export default function Page() {
 
     return () => clearInterval(interval);
   }, []);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -136,6 +158,28 @@ export default function Page() {
   const recentActivities = metrics ? metrics.recent_activities : [];
   const congestionMatrix = metrics ? metrics.congestion_matrix : [];
 
+  const weekdayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const weekdayData = metrics ? weekdayOrder.map(day => ({
+    name: day.slice(0, 3),
+    events: metrics.event_trends?.[day] || 0,
+    baseline: Math.round((metrics.event_trends?.[day] || 0) * 0.85)
+  })) : [];
+
+  const categoryData = metrics ? Object.entries(metrics.event_types_distribution || {}).map(([key, val]) => ({
+    category: key.charAt(0).toUpperCase() + key.slice(1),
+    count: val
+  })).sort((a, b) => b.count - a.count) : [];
+
+  const congestionData = metrics ? (metrics.congestion_matrix || []).map((val: number, idx: number) => {
+    const isPeak = (7 <= idx && idx <= 10) || (16 <= idx && idx <= 20);
+    return {
+      hour: `${String(idx).padStart(2, "0")}:00`,
+      intensity: val,
+      period: isPeak ? "Peak" : "Off-Peak"
+    };
+  }) : [];
+
+
   if (!metrics && !isLoading) {
     return (
       <>
@@ -155,7 +199,7 @@ export default function Page() {
               Activate Urban Intelligence
             </h1>
             <p className="font-sans text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Welcome to <span className="font-croissant text-primary">CityLearn</span>. The dashboard is currently waiting for urban data. Run your first event neural synthesis to generate predictions, check congestion levels, and access resource planning tools.
+              Welcome to <span className="citylearn-brand text-primary">CityLearn</span>. The dashboard is currently waiting for urban data. Run your first event neural synthesis to generate predictions, check congestion levels, and access resource planning tools.
             </p>
             <div className="pt-4">
               <Link
@@ -198,18 +242,12 @@ export default function Page() {
             <h1 className="font-merriweather text-3xl md:text-4xl text-foreground tracking-tight leading-none font-bold">
               Cities Forget. <br/>
               <span className="font-merriweather text-primary font-extrabold">
-                <span className="font-croissant">CityLearn</span> Remembers.
+                <span className="citylearn-brand">CityLearn</span> Remembers.
               </span>
             </h1>
             <p className="font-sans text-xs md:text-sm text-muted-foreground max-w-lg leading-relaxed">
               Advanced urban intelligence mapping trillions of historical data points to predict and optimize city infrastructure.
             </p>
-            {metrics && (
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 border border-green-200 text-green-700 text-[11px] font-bold rounded-full uppercase tracking-wider mt-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
-                Analysis Active — Dashboard Live
-              </div>
-            )}
           </div>
         </section>
 
@@ -255,7 +293,8 @@ export default function Page() {
         </section>
 
         {/* KPI Cards & Charts Bento */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
           
           {/* KPIs Column */}
           <div className="md:col-span-3 space-y-4">
@@ -313,7 +352,7 @@ export default function Page() {
           </div>
 
           {/* Interactive Map Section */}
-          <div className="md:col-span-6 bg-white border border-border rounded-2xl relative overflow-hidden min-h-[400px] shadow-sm flex flex-col">
+          <div className="md:col-span-6 bg-white border border-border rounded-2xl relative overflow-hidden shadow-sm flex flex-col h-full">
             <div className="absolute top-4 left-4 z-[500] flex flex-col gap-2">
               <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 border border-border shadow-sm">
                 <span className="material-symbols-outlined text-primary text-sm">location_on</span>
@@ -334,34 +373,94 @@ export default function Page() {
               </div>
             </div>
 
-            <div id="dashboard-map" className="w-full h-full flex-grow" style={{ minHeight: "400px", zIndex: 10 }} />
+            <div id="dashboard-map" className="w-full h-full flex-grow min-h-[400px] md:min-h-0" style={{ zIndex: 10 }} />
           </div>
 
-          {/* Activity Feed Column */}
-          <div className="md:col-span-3 bg-white border border-border rounded-2xl p-6 flex flex-col shadow-sm">
-            <h3 className="text-base font-bold text-foreground mb-6">Recent Activities</h3>
-            <div className="flex-grow space-y-6 overflow-y-auto pr-1">
-              
-              {isLoading ? (
-                <div className="text-xs text-muted-foreground font-mono">Streaming event logs...</div>
-              ) : recentActivities.length > 0 ? (
-                recentActivities.map((act) => (
-                  <div key={act.id} className="relative pl-6 border-l border-border pb-2">
-                    <div className="absolute -left-1.5 top-1.5 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white"></div>
-                    <span className="text-[9px] font-bold text-primary uppercase tracking-wider block font-mono">
-                      {act.time} — {act.event_type}
-                    </span>
-                    <p className="text-xs text-foreground mt-0.5">{act.description} near {act.corridor}.</p>
-                  </div>
-                ))
-              ) : (
-                <div className="text-xs text-muted-foreground font-mono">No recent activities found.</div>
-              )}
-
+          {/* Recent Activities Section */}
+          <div className="md:col-span-3 bg-gradient-to-b from-white to-slate-50/50 border border-border rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 shrink-0">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-primary text-sm">history</span>
+                Recent Activities
+              </h3>
             </div>
-            <button className="mt-4 w-full py-2.5 rounded-lg border border-border text-[9px] font-bold hover:bg-slate-50 transition-colors uppercase tracking-wider">
-              Audit Full Stream
-            </button>
+            
+            <div className="flex-grow flex flex-col justify-between gap-3 overflow-y-auto pr-1">
+              {recentActivities && recentActivities.length > 0 ? (
+                recentActivities.map((act: any) => {
+                  let dotColor = "bg-primary";
+                  let textColor = "text-primary";
+                  let bgGradient = "from-primary/[0.04] to-transparent";
+                  let borderTheme = "border-primary/10 hover:border-primary/30";
+                  let icon = "event";
+                  
+                  const cleanEventType = (act.event_type || "")
+                    .replace(/unplanned/gi, "")
+                    .replace(/^\s*[-—:\s]+\s*|\s*[-—:\s]+\s*$/g, "")
+                    .trim();
+                  
+                  const cleanDescription = (act.description || "")
+                    .replace(/unplanned/gi, "")
+                    .trim();
+
+                  const eventTypeLower = cleanEventType.toLowerCase();
+                  if (eventTypeLower.includes("assembly") || eventTypeLower.includes("concert")) {
+                    dotColor = "bg-primary";
+                    textColor = "text-primary";
+                    bgGradient = "from-primary/[0.04] to-transparent";
+                    borderTheme = "border-primary/10 hover:border-primary/30";
+                    icon = "groups";
+                  } else if (eventTypeLower.includes("sports") || eventTypeLower.includes("surge") || eventTypeLower.includes("transit")) {
+                    dotColor = "bg-secondary";
+                    textColor = "text-secondary";
+                    bgGradient = "from-secondary/[0.04] to-transparent";
+                    borderTheme = "border-secondary/10 hover:border-secondary/30";
+                    icon = "directions_transit";
+                  } else if (eventTypeLower.includes("failure") || eventTypeLower.includes("accident") || eventTypeLower.includes("closure")) {
+                    dotColor = "bg-violet-500";
+                    textColor = "text-violet-600";
+                    bgGradient = "from-violet-500/[0.04] to-transparent";
+                    borderTheme = "border-violet-200/50 hover:border-violet-300";
+                    icon = "warning";
+                  } else {
+                    dotColor = "bg-cyan-500";
+                    textColor = "text-cyan-600";
+                    bgGradient = "from-cyan-500/[0.04] to-transparent";
+                    borderTheme = "border-cyan-200/50 hover:border-cyan-300";
+                    icon = "sensors";
+                  }
+
+                  return (
+                    <div 
+                      key={act.id} 
+                      className={`group/item relative flex flex-col p-3 rounded-xl border ${borderTheme} bg-gradient-to-r ${bgGradient} hover:shadow-sm transition-all duration-200`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[12px] text-muted-foreground/60">{icon}</span>
+                          <span className="text-[9px] font-mono font-bold text-muted-foreground">{act.time || "12:00"}</span>
+                        </div>
+                        <span className={`text-[8px] font-bold tracking-wider uppercase font-mono px-1.5 py-0.5 rounded-full ${dotColor} bg-opacity-10 ${textColor}`}>
+                          {cleanEventType}
+                        </span>
+                      </div>
+                      <p className="text-xs text-foreground font-semibold leading-normal pr-1">
+                        {cleanDescription}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1.5 text-[9px] text-muted-foreground font-sans">
+                        <span className="material-symbols-outlined text-[10px]">location_on</span>
+                        <span className="truncate max-w-[170px]">{act.corridor}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex-grow flex flex-col items-center justify-center py-12 text-center gap-2">
+                  <span className="material-symbols-outlined text-muted-foreground text-3xl">inbox</span>
+                  <p className="text-xs text-muted-foreground font-mono">No recent activities recorded.</p>
+                </div>
+              )}
+            </div>
           </div>
 
         </section>
@@ -372,82 +471,118 @@ export default function Page() {
           {/* Trend Chart */}
           <div className="bg-white border border-border p-6 rounded-2xl shadow-sm">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-base font-bold text-foreground">Event Trends</h3>
-              <div className="flex gap-3 text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-primary"></div>
-                  <span>Historical</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  <span>Baseline</span>
-                </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Event Trends</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans">Historical traffic incident trends</p>
+              </div>
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
+                <button
+                  onClick={() => setActiveTrendTab("daily")}
+                  className={`px-2.5 py-1 text-[9px] font-bold rounded-md transition-all uppercase tracking-wider ${
+                    activeTrendTab === "daily" ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setActiveTrendTab("category")}
+                  className={`px-2.5 py-1 text-[9px] font-bold rounded-md transition-all uppercase tracking-wider ${
+                    activeTrendTab === "category" ? "bg-white text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Category
+                </button>
               </div>
             </div>
             
             <div className="h-44 w-full relative">
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
-                <defs>
-                  <linearGradient id="chart-grad" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(263, 70%, 50%)" stopOpacity="0.15"></stop>
-                    <stop offset="100%" stopColor="hsl(263, 70%, 50%)" stopOpacity="0"></stop>
-                  </linearGradient>
-                </defs>
-                <path d="M0,80 Q50,75 100,40 T200,60 T300,20 T400,50 L400,100 L0,100 Z" fill="url(#chart-grad)"></path>
-                <path d="M0,80 Q50,75 100,40 T200,60 T300,20 T400,50" fill="none" stroke="hsl(263, 70%, 50%)" strokeWidth="2.5"></path>
-                <path d="M0,90 Q50,85 100,70 T200,80 T300,50 T400,60" fill="none" stroke="hsl(221, 83%, 53%)" strokeDasharray="3" strokeWidth="1.5"></path>
-              </svg>
-              
-              <div className="absolute inset-0 grid grid-cols-6 pointer-events-none opacity-20">
-                <div className="border-r border-slate-300 h-full"></div>
-                <div className="border-r border-slate-300 h-full"></div>
-                <div className="border-r border-slate-300 h-full"></div>
-                <div className="border-r border-slate-300 h-full"></div>
-                <div className="border-r border-slate-300 h-full"></div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between mt-4 text-[9px] font-bold text-muted-foreground tracking-wider uppercase font-mono">
-              <span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span><span>00:00</span>
+              {activeTrendTab === "daily" ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weekdayData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="eventTrendsGrad" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 8, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 8, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "10px", fontWeight: "bold" }} />
+                    <Area type="monotone" dataKey="events" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#eventTrendsGrad)" name="Events" />
+                    <Area type="monotone" dataKey="baseline" stroke="hsl(var(--secondary))" strokeWidth={1.5} strokeDasharray="3 3" fill="none" name="Baseline" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="category" tick={{ fontSize: 7, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 8, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "10px", fontWeight: "bold" }} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Incidents">
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index % 2 === 0 ? "hsl(var(--primary))" : "hsl(var(--secondary))"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
           {/* Congestion Matrix */}
           <div className="bg-white border border-border p-6 rounded-2xl shadow-sm">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-base font-bold text-foreground">Congestion Matrix</h3>
-              <span className="text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-0.5 rounded">Sync: Optimal</span>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Congestion Matrix</h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5 font-sans">24-hour incident density heatmap</p>
+              </div>
+              <div className="flex gap-3 text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-primary"></div>
+                  <span>Peak Hours</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-slate-300"></div>
+                  <span>Off-Peak</span>
+                </div>
+              </div>
             </div>
             
-            <div className="h-44 flex items-end gap-1.5 px-2">
-              {congestionMatrix.slice(0, 12).map((val, idx) => {
-                // Map the dynamic count values to height percentage
-                const maxVal = Math.max(...congestionMatrix, 1);
-                const heightPercent = Math.min(95, Math.max(10, Math.round((val / maxVal) * 95)));
-                return (
-                  <div 
-                    key={idx} 
-                    className={`flex-1 rounded-t transition-all cursor-pointer ${
-                      idx === 4 ? "bg-primary shadow-sm" : "bg-slate-100 hover:bg-primary/20"
-                    }`}
-                    style={{ height: `${heightPercent}%` }}
-                    title={`Hour ${idx * 2}: ${val} events`}
-                  ></div>
-                );
-              })}
-              {!isLoading && congestionMatrix.length === 0 && (
-                <div className="w-full text-xs text-muted-foreground font-mono self-center">Run an event analysis to populate congestion history.</div>
+            <div className="h-44 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={congestionData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="hour" tick={{ fontSize: 7, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval={2} />
+                  <YAxis tick={{ fontSize: 8, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "white", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "10px", fontWeight: "bold" }}
+                    formatter={(value: any, name: any, props: any) => [value, `${props.payload.period} Density`]}
+                  />
+                  <Bar dataKey="intensity" radius={[2, 2, 0, 0]}>
+                    {congestionData.map((entry, index) => {
+                      const isPeak = (7 <= index && index <= 10) || (16 <= index && index <= 20);
+                      return (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={isPeak ? "hsl(var(--primary))" : "rgba(148, 163, 184, 0.3)"} 
+                        />
+                      );
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              {!isLoading && congestionData.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground font-mono">Run an event analysis to populate congestion history.</div>
               )}
             </div>
 
             <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider block font-sans">Peak Sensor Node</span>
-                <span className="text-xs font-semibold text-foreground">{metrics ? `${metrics.active_location} - ${metrics.active_severity}` : "-"}</span>
+                <span className="text-xs font-semibold text-foreground">{metrics ? `${metrics.active_location || 'Corridor A'} - ${metrics.active_severity || 'High'}` : "-"}</span>
               </div>
-              <button className="bg-primary hover:bg-primary/95 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm hover:shadow active:scale-[0.98] transition-all">
-                Adjust Sensors
-              </button>
             </div>
           </div>
 

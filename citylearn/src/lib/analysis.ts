@@ -50,3 +50,60 @@ export async function loadUnifiedAnalysis(): Promise<UnifiedAnalysisResponse | n
   if (remote) storeAnalysis(remote);
   return remote;
 }
+
+export interface ApprovedRecommendation {
+  timestamp: string;
+  recommendationType: string;
+  eventId: string;
+  approved: boolean;
+}
+
+export const APPROVED_REC_STORAGE_KEY = "citylearn:approved_recommendations";
+
+export function getApprovedRecommendations(): ApprovedRecommendation[] {
+  if (typeof window === "undefined") return [];
+  const raw = window.localStorage.getItem(APPROVED_REC_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Failed to parse approved recommendations", error);
+    return [];
+  }
+}
+
+export function saveApprovedRecommendation(record: ApprovedRecommendation) {
+  if (typeof window === "undefined") return;
+  const current = getApprovedRecommendations();
+  const exists = current.some(
+    (r) => r.eventId === record.eventId && r.recommendationType === record.recommendationType
+  );
+  if (!exists) {
+    current.push(record);
+    window.localStorage.setItem(APPROVED_REC_STORAGE_KEY, JSON.stringify(current));
+  }
+}
+
+export async function fetchBackendMetrics(): Promise<any> {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/api/metrics`);
+    if (!response.ok) throw new Error("Metrics API failed");
+    return response.json();
+  } catch (error) {
+    console.error("Failed to fetch backend metrics:", error);
+    return null;
+  }
+}
+
+export async function fetchDashboardMetrics(): Promise<any> {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/api/dashboard-metrics`);
+    if (!response.ok) throw new Error("Dashboard metrics API failed");
+    return response.json();
+  } catch (error) {
+    console.error("Failed to fetch dashboard metrics:", error);
+    return null;
+  }
+}
+
+

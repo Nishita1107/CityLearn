@@ -2,11 +2,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { loadUnifiedAnalysis } from "@/lib/analysis";
+import { loadUnifiedAnalysis, saveApprovedRecommendation } from "@/lib/analysis";
+import { AuthToast } from "@/components/shared/AuthToast";
 
 export default function Page() {
   const [analysis, setAnalysis] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     const loadRecommendations = async () => {
@@ -30,6 +32,36 @@ export default function Page() {
       p.style.animationDelay = Math.random() * 2 + "s";
     });
   }, []);
+
+  /*
+   * DEVELOPER AUDIT: Response Strategies Graph / Map
+   * - Data Source: Fed by `loadUnifiedAnalysis()` which retrieves the latest ML prediction payload (local storage or `/api/last-analysis`).
+   * - Static vs Dynamic: Previously, the SVG shapes (routes, sectors, nodes) were static coordinates. Redesigned to dynamically adapt based on predictions:
+   *   - If `barricade_plan.required` is true, a visual barricade core region and warning overlays are drawn.
+   *   - If `diversion_strategy.required` is true, detour routes (green neon path) are plotted alongside closed routes (red neon path).
+   *   - The map overlays and markers display the actual predicted officer counts and deployment area.
+   * - Relation to backend predictions: Directly visually encapsulates the `barricade_plan`, `diversion_strategy`, and `officer_deployment` metrics from the ML pipeline.
+   * - Decision making: Visualizes context for traffic control operators to facilitate rapid strategic resource provisioning.
+   */
+
+  const handleApprove = () => {
+    if (!analysis) return;
+    const ev = analysis.event_analysis?.input;
+    const recs = analysis.recommendations;
+    if (!recs) return;
+    const eventId = ev?.id || "9999";
+    const record = {
+      timestamp: new Date().toISOString(),
+      recommendationType: ev?.event_type || "Traffic Mitigation Plan",
+      eventId: String(eventId),
+      approved: true
+    };
+    saveApprovedRecommendation(record);
+    setToast({
+      message: "Recommendation Approved Successfully",
+      type: "success"
+    });
+  };
 
   if (isLoading) {
     return (
@@ -103,27 +135,6 @@ export default function Page() {
               Neural Intelligence Recommendation Matrix for Containment and Optimization
             </p>
           </div>
-
-          <div className="flex gap-4">
-            <div className="bg-white border border-border shadow-sm px-6 py-4 rounded-xl min-w-[150px]">
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">
-                Impact Score
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-primary">{isLoading ? "..." : impactScore}</span>
-                <span className="font-mono text-xs text-muted-foreground">/ 100</span>
-              </div>
-            </div>
-            <div className="bg-white border border-border shadow-sm px-6 py-4 rounded-xl min-w-[150px]">
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">
-                Efficiency Gains
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-green-600">+{isLoading ? "..." : efficiencyGains}%</span>
-                <span className="material-symbols-outlined text-green-600 text-sm">trending_up</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Main Bento Layout */}
@@ -143,11 +154,37 @@ export default function Page() {
                 
                 {/* SVG Route Overlays */}
                 <svg className="absolute inset-0 w-full h-full map-container" fill="none" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
-                  <path className="neon-line" d="M300 200 L500 400 L700 250" stroke="hsl(var(--secondary))" strokeDasharray="8 12" strokeWidth="2.5"></path>
-                  <path className="neon-line" d="M300 200 L150 150 M500 400 L550 550 M700 250 L850 300" stroke="hsl(var(--primary))" strokeDasharray="4 8" strokeWidth="1.5" opacity="0.6"></path>
-                  
-                  <rect fill="hsl(var(--secondary))" fillOpacity="0.06" height="100" stroke="hsl(var(--secondary))" strokeWidth="1" width="120" x="440" y="350" rx="4"></rect>
-                  <text fill="hsl(var(--secondary))" fontFamily="var(--font-noto-sans)" fontSize="9" fontWeight="bold" letterSpacing="1" x="450" y="375">SECTOR_ANOMALY_CORE</text>
+                  {/* Dynamic routes based on diversion strategy */}
+                  {recommendations?.diversion_strategy?.required ? (
+                    <>
+                      {/* closed route (red) */}
+                      <path className="neon-line" d="M300 200 L500 400" stroke="hsl(var(--destructive))" strokeDasharray="4 8" strokeWidth="3"></path>
+                      {/* detour route (green) */}
+                      <path className="neon-line" d="M300 200 L450 100 L700 250" stroke="#10b981" strokeDasharray="8 12" strokeWidth="2.5"></path>
+                      <path className="neon-line" d="M500 400 L700 250" stroke="hsl(var(--secondary))" strokeDasharray="8 12" strokeWidth="2.5"></path>
+                      <text fill="#10b981" fontFamily="var(--font-noto-sans)" fontSize="9" fontWeight="bold" letterSpacing="1" x="420" y="80">DETOUR_ROUTE_ACTIVE</text>
+                    </>
+                  ) : (
+                    <>
+                      {/* normal route */}
+                      <path className="neon-line" d="M300 200 L500 400 L700 250" stroke="hsl(var(--secondary))" strokeDasharray="8 12" strokeWidth="2.5"></path>
+                      <path className="neon-line" d="M300 200 L150 150 M500 400 L550 550 M700 250 L850 300" stroke="hsl(var(--primary))" strokeDasharray="4 8" strokeWidth="1.5" opacity="0.6"></path>
+                    </>
+                  )}
+
+                  {/* Dynamic barricade area */}
+                  {recommendations?.barricade_plan?.required ? (
+                    <>
+                      <rect fill="hsl(var(--destructive))" fillOpacity="0.08" height="80" stroke="hsl(var(--destructive))" strokeWidth="1.5" strokeDasharray="4 4" width="140" x="430" y="360" rx="4"></rect>
+                      <text fill="hsl(var(--destructive))" fontFamily="var(--font-noto-sans)" fontSize="9" fontWeight="bold" letterSpacing="1" x="440" y="385">BARRICADE_ZONE_ACTIVE</text>
+                      <text fill="hsl(var(--destructive))" fontFamily="var(--font-noto-sans)" fontSize="7" fontWeight="bold" x="440" y="400">RESTRICTED PASSAGE</text>
+                    </>
+                  ) : (
+                    <>
+                      <rect fill="hsl(var(--secondary))" fillOpacity="0.06" height="100" stroke="hsl(var(--secondary))" strokeWidth="1" width="120" x="440" y="350" rx="4"></rect>
+                      <text fill="hsl(var(--secondary))" fontFamily="var(--font-noto-sans)" fontSize="9" fontWeight="bold" letterSpacing="1" x="450" y="375">SECTOR_ANOMALY_CORE</text>
+                    </>
+                  )}
 
                   <circle className="pulse-neural" cx="300" cy="200" fill="hsl(var(--secondary))" r="5"></circle>
                   <circle className="pulse-neural" cx="500" cy="400" fill="hsl(var(--secondary))" r="5" style={{ animationDelay: "1s" }}></circle>
@@ -192,7 +229,6 @@ export default function Page() {
                   <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
                     {isLoading ? "..." : `${recommendations?.officer_deployment?.officer_count || 1} Officers`}
                   </span>
-                  <span className="material-symbols-outlined text-amber-600 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </div>
               </div>
 
@@ -211,7 +247,6 @@ export default function Page() {
                   <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
                     {isLoading ? "..." : (recommendations?.barricade_plan?.required ? "Required" : "Not Required")}
                   </span>
-                  <span className="material-symbols-outlined text-amber-600 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </div>
               </div>
 
@@ -230,7 +265,6 @@ export default function Page() {
                   <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
                     {isLoading ? "..." : (recommendations?.diversion_strategy?.required ? "Active" : "Monitor Flow")}
                   </span>
-                  <span className="material-symbols-outlined text-amber-500 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </div>
               </div>
 
@@ -238,8 +272,8 @@ export default function Page() {
           </div>
 
           {/* Right Area: Sidebar Statistics */}
-          <div className="lg:col-span-4">
-            <div className="bg-white border border-border shadow-sm p-8 rounded-2xl h-full flex flex-col justify-between space-y-8">
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white border border-border shadow-sm p-6 rounded-2xl space-y-5">
               
               <div className="space-y-6">
                 <h3 className="text-xl font-bold text-foreground">Neural Analysis</h3>
@@ -300,22 +334,51 @@ export default function Page() {
                   </p>
                 </div>
                 
-                <button className="w-full py-4 bg-primary hover:bg-primary/95 text-white rounded-xl font-semibold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                <button
+                  onClick={handleApprove}
+                  className="w-full py-4 bg-primary hover:bg-primary/95 text-white rounded-xl font-semibold shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                >
                   <span className="material-symbols-outlined text-lg">verified</span>
                   Approve Recommendation
                 </button>
-                
-                <button className="w-full py-3 bg-transparent border border-border hover:bg-slate-50 text-muted-foreground hover:text-foreground rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
-                  Simulate Variant B
-                </button>
               </div>
 
+            </div>
+
+            {/* Impact Score and Efficiency Gains */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white border border-border shadow-sm px-6 py-4 rounded-2xl">
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">
+                  Impact Score
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-primary">{isLoading ? "..." : impactScore}</span>
+                  <span className="font-mono text-xs text-muted-foreground">/ 100</span>
+                </div>
+              </div>
+              <div className="bg-white border border-border shadow-sm px-6 py-4 rounded-2xl">
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-1">
+                  Efficiency Gains
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-green-600">+{isLoading ? "..." : efficiencyGains}%</span>
+                  <span className="material-symbols-outlined text-green-600 text-sm">trending_up</span>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
 
       </div>
+
+      {toast && (
+        <AuthToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </>
   );
 }

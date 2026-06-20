@@ -1,6 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { EB_Garamond, Noto_Sans } from "next/font/google";
+import { EB_Garamond, Noto_Sans, Croissant_One } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 
@@ -14,6 +14,12 @@ const notoSans = Noto_Sans({
   subsets: ["latin"],
   variable: "--font-noto-sans",
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const croissantOne = Croissant_One({
+  subsets: ["latin"],
+  variable: "--font-croissant-one",
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -32,7 +38,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${ebGaramond.variable} ${notoSans.variable} font-sans antialiased`}>
+      <body className={`${ebGaramond.variable} ${notoSans.variable} ${croissantOne.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           forcedTheme="light"

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { CrowdCanvas } from "@/components/shared/CrowdCanvas";
 import { Country, State, City } from "country-state-city";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -357,8 +358,14 @@ export default function Page() {
             
             <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>network_intelligence</span>
-                <span className="font-croissant font-bold text-lg text-foreground">CityLearn</span>
+                <Image
+                  src="/images/logo.png"
+                  alt="CityLearn Logo"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-contain shrink-0"
+                />
+                <span className="citylearn-brand font-bold text-lg text-foreground">CityLearn</span>
               </div>
               <h2 className="font-display text-2xl font-bold leading-tight">Urban Analytics</h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -590,7 +597,7 @@ export default function Page() {
                 <div className="flex items-start gap-3 pt-2">
                   <input className="mt-1 w-4 h-4 rounded border-border text-primary focus:ring-primary/20 accent-primary" id="terms" type="checkbox" required />
                   <label className="text-[10px] text-muted-foreground font-semibold leading-relaxed" htmlFor="terms">
-                    I agree to the <a className="text-primary hover:underline" href="#">Terms of Service</a> and <a className="text-primary hover:underline" href="#">Data Governance Protocol</a> of CityLearn Intelligence.
+                    I agree to the <a className="text-primary hover:underline" href="#">Terms of Service</a> and <a className="text-primary hover:underline" href="#">Data Governance Protocol</a> of <span className="citylearn-brand">CityLearn</span> Intelligence.
                   </label>
                 </div>
               </div>

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Image from "next/image";
 import { CrowdCanvas } from "@/components/shared/CrowdCanvas";
 import { AuthToast } from "@/components/shared/AuthToast";
 
@@ -130,8 +131,14 @@ export default function Page() {
         {/* Header (Simplified) */}
         <header className="relative z-10 w-full h-16 flex items-center px-6 md:px-12 bg-white/70 backdrop-blur-md border-b border-border">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-2xl" style={{"fontVariationSettings": "'FILL' 1"}}>network_intelligence</span>
-            <h1 className="font-croissant text-xl md:text-2xl font-bold tracking-tight text-foreground">CityLearn</h1>
+            <Image
+              src="/images/logo.png"
+              alt="CityLearn Logo"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain shrink-0"
+            />
+            <h1 className="citylearn-brand text-xl md:text-2xl font-bold tracking-tight text-foreground">CityLearn</h1>
           </div>
         </header>
 
@@ -141,7 +148,7 @@ export default function Page() {
             {/* Tagline */}
             <div className="mb-8 text-center select-none overflow-visible">
               <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-black to-blue-600 bg-clip-text text-transparent pb-2 px-2 whitespace-nowrap">
-                Welcome to <span className="font-croissant">CityLearn</span>!
+                Welcome to <span className="citylearn-brand">CityLearn</span>!
               </h2>
               <div className="mx-auto w-16 h-1 bg-gradient-to-r from-black to-blue-600 rounded-full opacity-85 mt-3"></div>
             </div>

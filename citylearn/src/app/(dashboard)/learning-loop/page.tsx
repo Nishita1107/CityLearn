@@ -1,7 +1,16 @@
 // @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
-import { loadUnifiedAnalysis } from "@/lib/analysis";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import { loadUnifiedAnalysis, fetchBackendMetrics, getApprovedRecommendations } from "@/lib/analysis";
 
 const ACCURACY_DATA = [72.1, 74.5, 73.8, 76.2, 78.0, 77.4, 80.1, 81.9, 82.4, 83.7, 85.0, 84.6, 86.3, 87.1, 88.4, 89.0, 90.2, 91.5, 92.0, 91.8, 93.1, 93.9, 94.4, 94.8];
 const KNOWLEDGE_DATA = [12, 18, 22, 28, 35, 41, 48, 57, 65, 70, 78, 84, 89, 95, 102, 108, 118, 127, 135, 142, 151, 162, 175, 188];
@@ -25,100 +34,115 @@ const CONSOLIDATION_HISTORY = [
 ];
 
 function AccuracyTrendChart({ data }: { data: number[] }) {
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const w = 400, h = 140;
-  const pad = { left: 32, right: 12, top: 16, bottom: 8 };
-  const chartW = w - pad.left - pad.right;
-  const chartH = h - pad.top - pad.bottom;
-  const minVal = 50, maxVal = 100;
-
-  const pts = data.map((v, i) => ({
-    x: pad.left + (i / (data.length - 1)) * chartW,
-    y: pad.top + chartH - ((v - minVal) / (maxVal - minVal)) * chartH,
-    val: v,
+  const chartData = data.map((val, idx) => ({
+    name: idx === 0 ? "00:00" : idx === 8 ? "08:00" : idx === 16 ? "16:00" : idx === 23 ? "NOW" : `T-${23 - idx}h`,
+    "Accuracy": val,
   }));
 
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const areaPath = linePath + ` L ${pts[pts.length - 1].x} ${pad.top + chartH} L ${pts[0].x} ${pad.top + chartH} Z`;
-
-  const yLabels = [50, 60, 70, 80, 90, 100];
-
   return (
-    <div className="relative w-full" style={{ height: 160 }}>
-      <svg width="100%" height="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="accGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {/* Y grid lines */}
-        {yLabels.map(v => {
-          const y = pad.top + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
-          return (
-            <g key={v}>
-              <line x1={pad.left} x2={w - pad.right} y1={y} y2={y} stroke="#e2e8f0" strokeWidth="0.8" />
-              <text x={pad.left - 4} y={y + 3} fontSize="6" fill="#94a3b8" textAnchor="end">{v}</text>
-            </g>
-          );
-        })}
-        {/* Area fill */}
-        <path d={areaPath} fill="url(#accGrad)" />
-        {/* Line */}
-        <path d={linePath} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinejoin="round" />
-        {/* Hover dots */}
-        {pts.map((p, i) => (
-          <circle
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            r={hoverIdx === i ? 4 : 2}
-            fill={hoverIdx === i ? "hsl(var(--primary))" : "white"}
-            stroke="hsl(var(--primary))"
-            strokeWidth="1.5"
-            style={{ cursor: "pointer", transition: "r 0.1s" }}
-            onMouseEnter={() => setHoverIdx(i)}
-            onMouseLeave={() => setHoverIdx(null)}
+    <div className="w-full h-[110px] relative mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={chartData}
+          margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="accGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <XAxis 
+            dataKey="name" 
+            tick={{ fontSize: 7, fill: "#94a3b8" }}
+            axisLine={false}
+            tickLine={false}
           />
-        ))}
-        {/* Hover tooltip */}
-        {hoverIdx !== null && (() => {
-          const p = pts[hoverIdx];
-          const tx = Math.min(p.x, w - 50);
-          return (
-            <g>
-              <rect x={tx - 2} y={p.y - 20} width={40} height={14} rx={3} fill="hsl(var(--primary))" opacity="0.9" />
-              <text x={tx + 18} y={p.y - 10} fontSize="7" fill="white" textAnchor="middle" fontWeight="bold">{p.val}%</text>
-            </g>
-          );
-        })()}
-      </svg>
+          <YAxis 
+            domain={[50, 100]} 
+            tick={{ fontSize: 7, fill: "#94a3b8" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: "white", 
+              border: "1px solid #e2e8f0", 
+              borderRadius: "6px",
+              fontSize: "9px",
+              fontWeight: "bold",
+              color: "#1e293b"
+            }} 
+          />
+          <Area 
+            type="monotone" 
+            dataKey="Accuracy" 
+            stroke="hsl(var(--primary))" 
+            strokeWidth={1.5}
+            fillOpacity={1} 
+            fill="url(#accGrad)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
 
-function KnowledgeGrowthChart({ data }: { data: number[] }) {
-  const maxVal = Math.max(...data, 1);
+function KnowledgeGrowthChart({ data, approvedCount }: { data: number[]; approvedCount: number }) {
+  const chartData = data.map((val, idx) => {
+    const approvedGrowth = idx > 12 ? Math.min(approvedCount, idx - 12) * 15 : 0;
+    return {
+      name: `Epoch ${idx + 1}`,
+      "Knowledge Index": val + approvedGrowth,
+    };
+  });
+
   return (
-    <div className="flex-1 relative flex items-end justify-between gap-1 px-1 mt-4" style={{ minHeight: 140 }}>
-      {data.map((v, i) => {
-        const heightPct = Math.round((v / maxVal) * 92);
-        const isLatest = i === data.length - 1;
-        return (
-          <div key={i} className="relative flex-1 flex flex-col items-center justify-end group" style={{ minHeight: 140 }}>
-            <div
-              className={`w-full rounded-t transition-all duration-300 ${isLatest ? "bg-secondary shadow-sm" : "bg-secondary/30 hover:bg-secondary/60"}`}
-              style={{ height: `${heightPct}%` }}
-              title={`${v} TB processed`}
-            />
-            {isLatest && (
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-secondary text-white text-[7px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap">
-                {v}T
-              </div>
-            )}
-          </div>
-        );
-      })}
+    <div className="w-full h-[110px] relative mt-2">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={chartData}
+          margin={{ top: 5, right: 5, left: -25, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="colorKnowledge" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <XAxis 
+            dataKey="name" 
+            tick={{ fontSize: 7, fill: "#94a3b8" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis 
+            tick={{ fontSize: 7, fill: "#94a3b8" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: "white", 
+              border: "1px solid #e2e8f0", 
+              borderRadius: "6px",
+              fontSize: "9px",
+              fontWeight: "bold",
+              color: "#1e293b"
+            }} 
+          />
+          <Area 
+            type="monotone" 
+            dataKey="Knowledge Index" 
+            stroke="hsl(var(--secondary))" 
+            strokeWidth={1.5}
+            fillOpacity={1} 
+            fill="url(#colorKnowledge)" 
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -130,6 +154,7 @@ export default function Page() {
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(true);
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
+  const [approvedCount, setApprovedCount] = useState(0);
 
   const [accuracyPoints, setAccuracyPoints] = useState(ACCURACY_DATA);
   const [knowledgePoints, setKnowledgePoints] = useState(KNOWLEDGE_DATA);
@@ -139,7 +164,27 @@ export default function Page() {
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
+        const approved = getApprovedRecommendations();
+        setApprovedCount(approved.length);
+
         const stored = await loadUnifiedAnalysis();
+        const metricsData = await fetchBackendMetrics();
+
+        // 1. Accuracy trend data from backend metrics or fallback
+        if (metricsData && metricsData.accuracy_trend) {
+          setAccuracyPoints(metricsData.accuracy_trend);
+        } else if (stored) {
+          const targetAccuracy = stored.predictions?.reliability_score || 82.4;
+          const newAccPoints = [];
+          for (let i = 0; i < 23; i++) {
+            const baseVal = 70 + (i / 22) * (targetAccuracy - 8 - 70);
+            const jitter = (Math.random() - 0.5) * 3;
+            newAccPoints.push(parseFloat(Math.max(65, Math.min(99, baseVal + jitter)).toFixed(1)));
+          }
+          newAccPoints.push(targetAccuracy);
+          setAccuracyPoints(newAccPoints);
+        }
+
         if (stored) {
           const targetAccuracy = stored.predictions?.reliability_score || 82.4;
           
@@ -154,16 +199,6 @@ export default function Page() {
             if (progress < 1) requestAnimationFrame(animate);
           };
           const t = setTimeout(() => requestAnimationFrame(animate), 800);
-
-          // Generate ACCURACY_DATA dynamically ending at targetAccuracy
-          const newAccPoints = [];
-          for (let i = 0; i < 23; i++) {
-            const baseVal = 70 + (i / 22) * (targetAccuracy - 8 - 70);
-            const jitter = (Math.random() - 0.5) * 3;
-            newAccPoints.push(parseFloat(Math.max(65, Math.min(99, baseVal + jitter)).toFixed(1)));
-          }
-          newAccPoints.push(targetAccuracy);
-          setAccuracyPoints(newAccPoints);
 
           // 2. Knowledge growth dynamic scaling
           const totalEvs = stored.dashboard_metrics?.total_events || 188;
@@ -420,7 +455,7 @@ export default function Page() {
           <section className="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             
             {/* Accuracy Trend */}
-            <div className="bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col">
+            <div className="bg-white border border-border shadow-sm rounded-2xl p-4 flex flex-col">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Accuracy Trend (24h)</h3>
                 <span className="text-[9px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded">+12.4%</span>
@@ -435,12 +470,12 @@ export default function Page() {
             </div>
 
             {/* Knowledge Growth */}
-            <div className="bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col">
+            <div className="bg-white border border-border shadow-sm rounded-2xl p-4 flex flex-col">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Knowledge Growth</h3>
                 <span className="text-[9px] font-mono font-bold text-secondary">24 epochs</span>
               </div>
-              <KnowledgeGrowthChart data={knowledgePoints} />
+              <KnowledgeGrowthChart data={knowledgePoints} approvedCount={approvedCount} />
               <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground">Cumulative Tokens</span>
                 <div className="flex items-center gap-2">
@@ -453,16 +488,12 @@ export default function Page() {
           </section>
 
           {/* Neural Pattern Feed (4 Columns) */}
-          <section className="col-span-12 lg:col-span-4 bg-white border border-border shadow-sm rounded-2xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-5">
+          <section className="col-span-12 lg:col-span-4 bg-white border border-border shadow-sm rounded-2xl p-4 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Neural Pattern Feed</h3>
-              <span className="px-2 py-0.5 bg-red-50 border border-red-200 text-red-700 text-[9px] font-bold rounded flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block"></span>
-                LIVE
-              </span>
             </div>
 
-            <div className="space-y-3 flex-1 overflow-y-auto pr-1 max-h-[380px]">
+            <div className="space-y-3 flex-1 overflow-y-auto pr-1 max-h-[260px]">
               {neuralPatterns.map((p, idx) => {
                 const borderCol = p.color === "primary" ? "border-primary" : p.color === "secondary" ? "border-secondary" : "border-amber-500";
                 const labelCol = p.color === "primary" ? "text-primary" : p.color === "secondary" ? "text-secondary" : "text-amber-700";
@@ -496,11 +527,6 @@ export default function Page() {
                 );
               })}
             </div>
-
-            <button className="w-full mt-5 py-3 bg-primary hover:bg-primary/95 text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow active:scale-[0.98] flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-base">play_circle</span>
-              Initiate Global Training Loop
-            </button>
           </section>
 
           {/* Memory Consolidation History (Full width) */}
@@ -519,10 +545,6 @@ export default function Page() {
                     className={`px-3 py-1.5 border text-xs font-semibold rounded-lg transition-all ${filterStatus === s ? "bg-primary text-white border-primary" : "bg-transparent border-border hover:bg-slate-50 text-foreground"}`}
                   >{s}</button>
                 ))}
-                <button className="px-3 py-1.5 bg-transparent border border-border hover:bg-slate-50 text-xs font-semibold rounded-lg text-foreground transition-all flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">download</span>
-                  Export
-                </button>
               </div>
             </div>
 

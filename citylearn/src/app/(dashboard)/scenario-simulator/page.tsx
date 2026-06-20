@@ -135,7 +135,7 @@ export default function Page() {
       <div className="font-body-md text-body-md">{/* Top Navigation */}
 <header className="fixed top-0 z-50 w-full bg-surface/10 backdrop-blur-3xl border-b border-white/10 flex justify-between items-center px-spacing-margin-desktop h-16">
 <div className="flex items-center gap-6">
-<div className="font-headline-md text-headline-md font-bold text-primary tracking-tight"><span className="font-croissant">CityLearn</span> Intelligence</div>
+<div className="font-headline-md text-headline-md font-bold text-primary tracking-tight"><span className="citylearn-brand">CityLearn</span> Intelligence</div>
 <div className="hidden md:flex relative w-64">
 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
 <input className="w-full bg-white/5 border-none rounded-full py-2 pl-10 text-body-md focus:ring-1 focus:ring-primary" placeholder="Explore scenarios..." type="text"/>
@@ -166,7 +166,7 @@ export default function Page() {
 <span className="material-symbols-outlined text-on-primary-container">hub</span>
 </div>
 <div>
-<h2 className="font-croissant text-[18px] font-bold text-primary leading-tight">CityLearn</h2>
+<h2 className="citylearn-brand text-[18px] font-bold text-primary leading-tight">CityLearn</h2>
 <p className="font-label-caps text-[10px] text-on-surface-variant">Neural Intelligence</p>
 </div>
 </div>

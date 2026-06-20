@@ -177,21 +177,24 @@ export default function Page() {
             </div>
 
             {/* Mini Trend Graph */}
-            <div className="relative h-40 w-full mt-4 bg-muted/20 border border-border/50 rounded-xl p-4 flex flex-col justify-end">
-              <div className="absolute inset-x-4 bottom-4 flex items-end justify-between h-24">
+            <div className="space-y-3 mt-4">
+              <div className="h-32 w-full bg-muted/20 border border-border/50 rounded-xl p-4 flex items-end justify-between relative">
                 {timelineHeights.map((h, i) => (
                   <div 
                     key={i} 
                     className={`w-[8%] rounded-t-sm transition-all duration-500 ${
-                      i === 3 ? "bg-primary shadow-sm" : "bg-muted-foreground/10"
+                      i === 3 ? "bg-primary shadow-sm" : "bg-muted-foreground/20"
                     }`}
                     style={{ height: `${h}%` }}
                     title={`Hour +${i * 0.5}: ${h}% predicted load`}
                   ></div>
                 ))}
               </div>
-              <div className="w-full h-px bg-border"></div>
-              <p className="absolute bottom-2 left-4 text-[9px] font-bold text-muted-foreground tracking-wider uppercase font-sans">Timeline: Next 4 Hours ({congestionTrend})</p>
+              
+              {/* Labels below chart */}
+              <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans px-1">
+                <span>Timeline: Next 4 Hours</span>
+              </div>
             </div>
             
             <div className="scanline opacity-10"></div>
@@ -222,89 +225,106 @@ export default function Page() {
             </p>
           </div>
 
-          {/* Prediction Card 3: Neural Map Widget */}
-          <div className="md:col-span-4 bg-white border border-border rounded-2xl overflow-hidden shadow-sm prediction-reveal flex flex-col justify-between" style={{"animationDelay": "0.2s"}}>
-            <div className="relative h-60 w-full">
-              <div className="absolute inset-0 bg-black/5 z-10 flex items-center justify-center">
-                <div className="px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full flex items-center gap-1.5 border border-border shadow-sm">
-                  <span className="material-symbols-outlined text-primary text-base">location_on</span>
-                  <span className="text-[10px] font-bold text-foreground font-sans uppercase">Active Grid: {eventLocation}</span>
-                </div>
-              </div>
-              <img className="w-full h-full object-cover grayscale-[0.2] contrast-[0.9] brightness-[1.05]" data-alt="Stylized city grid visualization" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdTpjWUbnqUSORlpIZLKHbFPjAleZ_h7NUeKbqI4gm63BcO2GMWu8s0wxe1UWApw_xw31V4IJbMs2257Gi8OZzuQk3buWbHG9npnct_4ohed6qIbBjN0YSSsdOaRTZui2FjEbvrQ1gKO4lDks_Xk7gNvpNs3eutLMQi0qXki68CCTyysME5YlYivmgF-MspoUYD5qNrEQavpR71_9oR57k6tlco-jZAXG0z6956sS2PBTkwlbyZgY6sfi7wvYZWJ7-MFiBjc6Kf48"/>
-            </div>
-            <div className="p-6 border-t border-border">
-              <h4 className="font-display font-bold text-sm text-foreground mb-2">Crowd Stability Forecast</h4>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div className={`h-full ${isStable ? 'bg-green-500' : 'bg-destructive'}`} style={{ width: `${stabilityPercent}%` }}></div>
-                </div>
-                <span className={`font-mono text-xs font-bold ${isStable ? 'text-green-600' : 'text-destructive'}`}>{stabilityPercent}% {isStable ? "Stable" : "Volatile"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Prediction Card 4: Forecast Summary */}
-          <div className="md:col-span-8 bg-white border border-border rounded-2xl p-8 shadow-sm prediction-reveal" style={{"animationDelay": "0.3s"}}>
+          {/* Prediction Card 3: Integrated Predictive Intelligence Panel */}
+          <div className="md:col-span-12 bg-white border border-border rounded-2xl p-8 shadow-sm prediction-reveal" style={{"animationDelay": "0.2s"}}>
             <h4 className="font-display text-base font-bold text-foreground mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">trending_up</span>
-              Predictive Congestion Trends
+              <span className="material-symbols-outlined text-primary">analytics</span>
+              Predictive Intelligence & Stability Panel
             </h4>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               
-              {/* Item 1 */}
-              <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-primary group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
-                    <span className="material-symbols-outlined">commute</span>
+              {/* Congestion Section */}
+              <div className="space-y-4">
+                <div className="border-b border-border pb-2 mb-2">
+                  <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Congestion & Resource Trends</h5>
+                </div>
+                
+                {/* Item 1 */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-primary group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
+                      <span className="material-symbols-outlined">commute</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">Public Transit Load</p>
+                      <p className="text-xs text-muted-foreground">{congestionTrend === 'Upward Trend' ? 'Significant increase predicted' : 'Normal volume predicted'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Public Transit Load</p>
-                    <p className="text-xs text-muted-foreground">{congestionTrend === 'Upward Trend' ? 'Significant increase predicted' : 'Normal volume predicted'}</p>
+                  <div className="text-right">
+                    <p className={`font-mono font-bold ${congestionTrend === 'Upward Trend' ? 'text-destructive' : 'text-green-600'}`}>
+                      {congestionTrend === 'Upward Trend' ? `+${(congestionScore * 3.5).toFixed(0)}%` : 'Stable'}
+                    </p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Variance</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={`font-mono font-bold ${congestionTrend === 'Upward Trend' ? 'text-destructive' : 'text-green-600'}`}>
-                    {congestionTrend === 'Upward Trend' ? `+${(congestionScore * 3.5).toFixed(0)}%` : 'Stable'}
-                  </p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Variance</p>
+
+                {/* Item 2 */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-green-600 group-hover:bg-green-50 group-hover:border-green-100 transition-colors">
+                      <span className="material-symbols-outlined">bolt</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">Resource Efficiency Gain</p>
+                      <p className="text-xs text-muted-foreground">Optimal power & dispatch grid flow</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-green-600 font-bold">+{ (reliabilityScore / 5).toFixed(0) }%</p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Efficiency</p>
+                  </div>
+                </div>
+
+                {/* Item 3 */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-secondary group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+                      <span className="material-symbols-outlined">road</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">Road Closure Status</p>
+                      <p className="text-xs text-muted-foreground">{predictions.road_closure_required ? 'Road closure required' : 'No closure needed'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-mono font-bold ${predictions.road_closure_required ? 'text-destructive' : 'text-green-600'}`}>
+                      {predictions.road_closure_required ? 'CLOSED' : 'OPEN'}
+                    </p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Status</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Item 2 */}
-              <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-green-600 group-hover:bg-green-50 group-hover:border-green-100 transition-colors">
-                    <span className="material-symbols-outlined">bolt</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Resource Efficiency Gain</p>
-                    <p className="text-xs text-muted-foreground">Optimal power & dispatch grid flow</p>
-                  </div>
+              {/* Crowd Stability Section */}
+              <div className="space-y-4">
+                <div className="border-b border-border pb-2 mb-2">
+                  <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Crowd Dynamics & Stability</h5>
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-green-600 font-bold">+{ (reliabilityScore / 5).toFixed(0) }%</p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Efficiency</p>
-                </div>
-              </div>
 
-              {/* Item 3 */}
-              <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-xl hover:border-primary/20 transition-all cursor-pointer group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-secondary group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
-                    <span className="material-symbols-outlined">road</span>
+
+
+                <div className="space-y-3 pt-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-muted-foreground">Crowd Stability Score</span>
+                    <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${isStable ? 'bg-green-50 text-green-700' : 'bg-red-50 text-destructive'}`}>
+                      {stabilityPercent}% {isStable ? "Stable" : "Volatile"}
+                    </span>
                   </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Road Closure Status</p>
-                    <p className="text-xs text-muted-foreground">{predictions.road_closure_required ? 'Road closure required' : 'No closure needed'}</p>
+                  <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                    <div className={`h-full ${isStable ? 'bg-green-500' : 'bg-destructive'}`} style={{ width: `${stabilityPercent}%` }}></div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-mono font-bold ${predictions.road_closure_required ? 'text-destructive' : 'text-green-600'}`}>
-                    {predictions.road_closure_required ? 'CLOSED' : 'OPEN'}
-                  </p>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-sans">Status</p>
+
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase block mb-1">Stability Trend</span>
+                      <span className="text-xs font-bold text-foreground">{stabilityForecast}</span>
+                    </div>
+                    <div className="p-3 bg-muted/30 border border-border rounded-xl">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase block mb-1">Risk Level</span>
+                      <span className="text-xs font-bold text-foreground">{isStable ? "Low Risk" : "Elevated Risk"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -314,14 +334,6 @@ export default function Page() {
         </div>
 
       </div>
-
-      {/* Floating Action Button */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-30 group">
-        <span className="material-symbols-outlined text-2xl" style={{"fontVariationSettings": "'FILL' 1"}}>psychology</span>
-        <div className="absolute right-16 bg-white px-4 py-2 rounded-lg border border-border shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-          <p className="text-xs font-bold text-foreground">Ask CityLearn AI</p>
-        </div>
-      </button>
     </>
   );
 }
