@@ -71,6 +71,47 @@ export default function Page() {
           });
         }
 
+        // Guest Login Interaction
+        const guestBtn = document.getElementById('guest-login-btn');
+        if (guestBtn) {
+          guestBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const originalContent = guestBtn.innerHTML;
+            const originalClassName = guestBtn.className;
+            guestBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm mr-1">refresh</span> Setting up guest session...';
+            guestBtn.disabled = true;
+            guestBtn.style.opacity = '0.7';
+
+            try {
+              const response = await fetch('/api/auth/guest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+              });
+
+              const data = await response.json();
+
+              if (!response.ok || !data.success) {
+                showToast(data.message || 'Guest login failed. Please try again.');
+                guestBtn.innerHTML = originalContent;
+                guestBtn.className = originalClassName;
+                guestBtn.disabled = false;
+                guestBtn.style.opacity = '';
+                return;
+              }
+
+              guestBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-1">check_circle</span> Welcome Guest';
+              guestBtn.className = "w-full bg-green-600 text-white font-body-md font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg";
+              setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+            } catch {
+              showToast('Unable to connect. Please try again.');
+              guestBtn.innerHTML = originalContent;
+              guestBtn.className = originalClassName;
+              guestBtn.disabled = false;
+              guestBtn.style.opacity = '';
+            }
+          });
+        }
+
         // Micro-interaction for inputs
         document.querySelectorAll('input').forEach(input => {
           input.addEventListener('focus', () => {
@@ -191,6 +232,18 @@ export default function Page() {
                 <button className="w-full bg-primary text-primary-foreground font-sans font-bold py-4 rounded-lg hover:brightness-105 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10" type="submit">
                   <span className="material-symbols-outlined text-lg" style={{"fontVariationSettings": "'FILL' 1"}}>login</span>
                   Sign In
+                </button>
+
+                {/* Continue as Guest */}
+                <div className="relative flex py-2 items-center">
+                  <div className="flex-grow border-t border-border"></div>
+                  <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase font-bold tracking-wider select-none">Or</span>
+                  <div className="flex-grow border-t border-border"></div>
+                </div>
+
+                <button id="guest-login-btn" className="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-sans font-bold py-4 rounded-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer" type="button">
+                  <span className="material-symbols-outlined text-lg">person_outline</span>
+                  Continue as Guest
                 </button>
               </form>
 
