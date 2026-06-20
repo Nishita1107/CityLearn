@@ -10,11 +10,7 @@
 [![ML](https://img.shields.io/badge/ML-CatBoost%20%7C%20Scikit--Learn-orange)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#-license)
 
-🔗 **Live Demo:** [Add demo link here]()
-
-🚀 **Deployments:**
-- Frontend (Vercel): [Add Vercel deployment link here]()
-- Backend (Hugging Face Spaces): [Add Hugging Face Space link here]()
+🔗 **Live Demo:** https://city-learn.vercel.app
 
 ---
 
@@ -33,7 +29,6 @@
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [API Reference](#-api-reference)
-- [Deployment](#-deployment)
 - [Sample Recommendation Output](#-sample-recommendation-output)
 - [Impact](#-impact)
 - [Future Enhancements](#-future-enhancements)
@@ -359,8 +354,6 @@ The backend is deployed as a **Docker Space** on Hugging Face.
 5. Your backend will be live at:
    `https://<your-username>-<space-name>.hf.space`
 
-🔗 **Hugging Face Backend URL:** [Add Hugging Face Space link here]()
-
 > Note: Hugging Face Spaces sleep after a period of inactivity on the free tier — the first request after idling may take a few seconds to wake up.
 
 ### Frontend → [Vercel](https://vercel.com)
@@ -372,7 +365,6 @@ The backend is deployed as a **Docker Space** on Hugging Face.
    - `MONGO_URI` → your MongoDB connection string
 4. Deploy.
 
-🔗 **Vercel Frontend URL:** [Add Vercel deployment link here]()
 
 > 💡 After deploying both services, update the placeholder links at the top of this README with the live demo and deployment URLs.
 
