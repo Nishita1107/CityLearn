@@ -10,7 +10,6 @@ env/
 
 # Project specific local indexes and artifacts
 backend/data/
-backend/ml_artifacts/
 data/
 *.pkl
 *.bin
