@@ -147,7 +147,7 @@ export default function Page() {
           <div className="w-full max-w-[460px]">
             {/* Tagline */}
             <div className="mb-8 text-center select-none overflow-visible">
-              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-black to-blue-600 bg-clip-text text-transparent pb-2 px-2 whitespace-nowrap">
+              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-black to-blue-600 bg-clip-text text-transparent pb-2 px-2 whitespace-normal">
                 Welcome to <span className="citylearn-brand">CityLearn</span>!
               </h2>
               <div className="mx-auto w-16 h-1 bg-gradient-to-r from-black to-blue-600 rounded-full opacity-85 mt-3"></div>
