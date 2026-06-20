@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
+import mongoose from "mongoose";
 import { cookies } from "next/headers";
 import { findUserById, updateUser, deleteUser, findUserByEmail, toPublicUser } from "@/lib/users";
 
@@ -15,6 +16,14 @@ export async function GET() {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    if (!isFallback && !mongoose.Types.ObjectId.isValid(userId)) {
+      cookieStore.delete("userId");
+      return NextResponse.json(
+        { success: false, message: "Invalid session" },
         { status: 401 }
       );
     }
@@ -76,6 +85,14 @@ export async function PUT(request: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    if (!isFallback && !mongoose.Types.ObjectId.isValid(userId)) {
+      cookieStore.delete("userId");
+      return NextResponse.json(
+        { success: false, message: "Invalid session" },
         { status: 401 }
       );
     }
@@ -195,6 +212,14 @@ export async function DELETE() {
     if (!userId) {
       return NextResponse.json(
         { success: false, message: "Not authenticated" },
+        { status: 401 }
+      );
+    }
+
+    if (!isFallback && !mongoose.Types.ObjectId.isValid(userId)) {
+      cookieStore.delete("userId");
+      return NextResponse.json(
+        { success: false, message: "Invalid session" },
         { status: 401 }
       );
     }

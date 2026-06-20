@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { loadUnifiedAnalysis, fetchDashboardMetrics } from "@/lib/analysis";
+import { jsPDF } from "jspdf";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -144,10 +145,11 @@ export default function Page() {
   }, [mapLoaded, metrics]);
 
   // Compute stats safely
-  const totalEvents = metrics ? metrics.total_events : null;
-  const eventsAnalyzed = metrics ? metrics.predictions_count : null;
-  const similarityCount = metrics ? metrics.similarity_count : null;
-  const activeEvents = metrics ? Math.max(0, totalEvents - metrics.resolved_events_count) : null;
+  const totalEvents = metrics ? (metrics.total_events ?? metrics.totalEvents ?? null) : null;
+  const eventsAnalyzed = metrics ? (metrics.predictions_count ?? metrics.events_analyzed ?? metrics.eventsAnalyzed ?? null) : null;
+  const similarityCount = metrics ? (metrics.similarity_count ?? metrics.similarityCount ?? null) : null;
+  const resolvedEventsCount = metrics ? (metrics.resolved_events_count ?? metrics.resolvedEventsCount ?? 0) : 0;
+  const activeEvents = metrics && typeof totalEvents === 'number' ? Math.max(0, totalEvents - resolvedEventsCount) : null;
   const criticalAlerts = metrics ? Object.keys(metrics.high_risk_zones || {}).length : null;
   
   // Risk index calculations
@@ -157,6 +159,134 @@ export default function Page() {
   const avgResolutionTime = metrics ? metrics.avg_resolution_time : null;
   const recentActivities = metrics ? metrics.recent_activities : [];
   const congestionMatrix = metrics ? metrics.congestion_matrix : [];
+
+  const downloadDashboardReport = () => {
+    if (!metrics) return;
+    
+    const doc = new jsPDF();
+    
+    // Set fonts and styles
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(124, 58, 237); // Primary color
+    doc.text("CITYLEARN URBAN INTELLIGENCE REPORT", 14, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139); // Muted foreground
+    const timestamp = new Date().toLocaleString();
+    doc.text(`Generated on: ${timestamp}`, 14, 32);
+    
+    // Draw a divider line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.line(14, 36, 196, 36);
+    
+    // Summary Metrics Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59); // Dark slate
+    doc.text("1. Command Summary Metrics", 14, 46);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(51, 65, 85);
+    
+    let y = 54;
+    const addMetricRow = (label: string, val: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 16, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(val, 85, y);
+      y += 8;
+    };
+    
+    addMetricRow("Total Events Learned:", String(totalEvents ?? 0));
+    addMetricRow("Predictions Generated:", String(eventsAnalyzed ?? 0));
+    addMetricRow("Similarity Matches:", String(similarityCount ?? 0));
+    addMetricRow("Active Events Monitored:", String(activeEvents ?? 0));
+    addMetricRow("Average Resolution Time:", `${metrics.avg_resolution_time ?? 120} minutes`);
+    
+    // Top High-Risk Zones
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.text("2. High-Risk Zones (Top Sectors)", 14, y);
+    y += 8;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(51, 65, 85);
+    
+    const zones = Object.entries(metrics.high_risk_zones || {});
+    if (zones.length > 0) {
+      zones.forEach(([zone, count]) => {
+        doc.text(`- ${zone}:`, 16, y);
+        doc.text(`${count} incidents`, 85, y);
+        y += 8;
+      });
+    } else {
+      doc.text("No high-risk zones recorded.", 16, y);
+      y += 8;
+    }
+    
+    // High-Risk Junctions
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.text("3. High-Risk Junctions", 14, y);
+    y += 8;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    
+    const junctions = Object.entries(metrics.high_risk_junctions || {});
+    if (junctions.length > 0) {
+      junctions.forEach(([junction, count]) => {
+        doc.text(`- ${junction}:`, 16, y);
+        doc.text(`${count} incidents`, 85, y);
+        y += 8;
+      });
+    } else {
+      doc.text("No high-risk junctions recorded.", 16, y);
+      y += 8;
+    }
+    
+    // Road Closure Statistics
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(30, 41, 59);
+    doc.text("4. Road Closure Statistics", 14, y);
+    y += 8;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    const rcStats = Object.entries(metrics.road_closure_stats || {});
+    if (rcStats.length > 0) {
+      rcStats.forEach(([status, count]) => {
+        const label = status === "true" ? "Required:" : "Not Required:";
+        doc.text(`- ${label}`, 16, y);
+        doc.text(`${count} incidents`, 85, y);
+        y += 8;
+      });
+    } else {
+      doc.text("No closure stats available.", 16, y);
+      y += 8;
+    }
+    
+    // Footer
+    doc.setDrawColor(241, 245, 249);
+    doc.line(14, 280, 196, 280);
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("CityLearn Command Center - Confidential Intelligence Document", 14, 285);
+    doc.text("Page 1 of 1", 180, 285);
+    
+    doc.save(`citylearn_dashboard_report_${new Date().toISOString().split("T")[0]}.pdf`);
+  };
 
   const weekdayOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const weekdayData = metrics ? weekdayOrder.map(day => ({
@@ -230,6 +360,21 @@ export default function Page() {
       
       <div className="space-y-8 max-w-7xl mx-auto">
         
+        {/* Top Header Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-border p-6 rounded-2xl shadow-sm">
+          <div>
+            <h1 className="text-xl font-bold font-merriweather text-foreground">Traffic Command Center</h1>
+            <p className="text-xs text-muted-foreground font-sans mt-1">Real-time event monitoring & institutional learning</p>
+          </div>
+          <button
+            onClick={downloadDashboardReport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-dark font-semibold rounded-xl text-xs border border-primary/20 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">download</span>
+            Download City Report
+          </button>
+        </div>
+
         {/* Hero Section */}
         <section 
           id="dashboard-hero" 
@@ -262,7 +407,7 @@ export default function Page() {
             </div>
             <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans mb-1">Events Learned</h3>
             <p className="font-display text-2xl font-bold text-foreground">
-              {isLoading ? "..." : totalEvents !== null ? totalEvents.toLocaleString() : "-"}
+              {isLoading ? "..." : typeof totalEvents === 'number' ? totalEvents.toLocaleString() : "-"}
             </p>
           </div>
 
@@ -274,7 +419,7 @@ export default function Page() {
             </div>
             <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans mb-1">Predictions Generated</h3>
             <p className="font-display text-2xl font-bold text-foreground">
-              {isLoading ? "..." : eventsAnalyzed !== null ? eventsAnalyzed.toLocaleString() : "-"}
+              {isLoading ? "..." : typeof eventsAnalyzed === 'number' ? eventsAnalyzed.toLocaleString() : "-"}
             </p>
           </div>
 
@@ -286,7 +431,7 @@ export default function Page() {
             </div>
             <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans mb-1">Similarity Matches</h3>
             <p className="font-display text-2xl font-bold text-foreground">
-              {isLoading ? "..." : similarityCount !== null ? similarityCount.toLocaleString() : "-"}
+              {isLoading ? "..." : typeof similarityCount === 'number' ? similarityCount.toLocaleString() : "-"}
             </p>
           </div>
 

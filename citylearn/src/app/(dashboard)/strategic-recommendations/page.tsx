@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { loadUnifiedAnalysis, saveApprovedRecommendation } from "@/lib/analysis";
 import { AuthToast } from "@/components/shared/AuthToast";
+import { jsPDF } from "jspdf";
 
 export default function Page() {
   const [analysis, setAnalysis] = useState(null);
@@ -61,6 +62,147 @@ export default function Page() {
       message: "Recommendation Approved Successfully",
       type: "success"
     });
+  };
+
+  const downloadPlanReport = () => {
+    if (!analysis) return;
+    const ev = analysis.event_analysis?.input;
+    const recs = analysis.recommendations;
+    if (!recs) return;
+
+    const doc = new jsPDF();
+
+    // Header Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(124, 58, 237); // Primary
+    doc.text("CITYLEARN INCIDENT MITIGATION PLAN", 14, 25);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    const timestamp = new Date().toLocaleString();
+    doc.text(`Generated on: ${timestamp}`, 14, 32);
+
+    // Line divider
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.line(14, 36, 196, 36);
+
+    // Event Metadata Section
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("1. Incident Metadata", 14, 46);
+
+    doc.setFontSize(10);
+    doc.setTextColor(51, 65, 85);
+    
+    let y = 54;
+    const addMetadataRow = (label: string, value: string, col2Label?: string, col2Value?: string) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 16, y);
+      const labelWidth = doc.getTextWidth(label);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(value), 16 + labelWidth + 2, y);
+
+      if (col2Label && col2Value !== undefined && col2Value !== null && col2Value !== "") {
+        doc.setFont("helvetica", "bold");
+        doc.text(col2Label, 110, y);
+        const col2LabelWidth = doc.getTextWidth(col2Label);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(col2Value), 110 + col2LabelWidth + 2, y);
+      }
+      y += 7;
+    };
+
+    addMetadataRow("Event Type:", ev?.event_type || "N/A", "Police Station:", ev?.police_station || "N/A");
+    addMetadataRow("Event Cause:", ev?.event_cause || "N/A", "Zone / Sector:", ev?.zone || "N/A");
+    addMetadataRow("Corridor Road:", ev?.corridor || "N/A", "Key Junction:", ev?.junction || "N/A");
+    addMetadataRow("Estimated Att.:", `${ev?.attendance || 0} people`, "Duration:", `${ev?.duration || 0} mins`);
+    addMetadataRow("Coordinates:", `${ev?.latitude || "N/A"}, ${ev?.longitude || "N/A"}`, "Priority Level:", analysis.event_analysis?.fingerprint?.priority || "N/A");
+
+    // Prediction Overview
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("2. Machine Learning Predictions", 14, y);
+    y += 8;
+
+    doc.setFontSize(10);
+    addMetadataRow("Road Closure Prob:", analysis.predictions?.road_closure_probability || "0%", "Priority Prediction:", analysis.predictions?.priority_prediction || "Low");
+    addMetadataRow("Congestion Impact:", `${recs.impact_score ?? 0} / 100`, "Efficiency Gain:", `+${recs.efficiency_gains ?? 0}%`);
+
+    // Recommended Mitigation Strategy
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 41, 59);
+    doc.text("3. Recommended Mitigation Directives", 14, y);
+    y += 8;
+
+    const addMitigationSection = (num: string, title: string, details: Array<{ label: string; text: string }>) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(124, 58, 237);
+      doc.text(`${num}. ${title}`, 16, y);
+      y += 6;
+
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      details.forEach((item) => {
+        doc.setFont("helvetica", "bold");
+        doc.text(item.label, 18, y);
+        doc.setFont("helvetica", "normal");
+        
+        // Wrap text to fit page
+        const lines = doc.splitTextToSize(String(item.text), 130);
+        doc.text(lines, 60, y);
+        y += (lines.length * 5) + 2;
+      });
+      y += 2;
+    };
+
+    addMitigationSection("A", "Manpower Deployment", [
+      { label: "Recommended Officers:", text: `${recs.officer_deployment?.officer_count ?? 0} Officers` },
+      { label: "Deployment Sector:", text: recs.officer_deployment?.deployment_area ?? ev?.zone ?? "N/A" },
+      { label: "Directive Action:", text: recs.officer_deployment?.recommended_action ?? recs.officer_deployment?.action ?? "N/A" },
+      { label: "Deployment Reasoning:", text: recs.officer_deployment?.reasoning ?? "N/A" }
+    ]);
+
+    // Check if we need a new page for barricades and diversion (in case y gets too high)
+    if (y > 210) {
+      doc.addPage();
+      y = 25;
+    }
+
+    addMitigationSection("B", "Barricading Strategy", [
+      { label: "Barricades Required:", text: recs.barricade_plan?.required ? "Yes (Active deployment)" : "No (Normal monitoring)" },
+      { label: "Placement Location:", text: recs.barricade_plan?.barricade_location ?? ev?.corridor ?? "N/A" },
+      { label: "Barricade Details:", text: recs.barricade_plan?.reasoning ?? "N/A" }
+    ]);
+
+    if (y > 210) {
+      doc.addPage();
+      y = 25;
+    }
+
+    addMitigationSection("C", "Traffic Diversion Plan", [
+      { label: "Diversion Status:", text: recs.diversion_strategy?.required ? "Active (Initiate detours)" : "Inactive (Monitor flow)" },
+      { label: "Detour Routes:", text: recs.diversion_strategy?.suggested_route ?? "N/A" },
+      { label: "Diversion Reasoning:", text: recs.diversion_strategy?.reasoning ?? "N/A" }
+    ]);
+
+    // Footer
+    doc.setDrawColor(241, 245, 249);
+    doc.line(14, 280, 196, 280);
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("CityLearn Command Center - Confidential Response Plan", 14, 285);
+    doc.text(`Page 1 of ${doc.getNumberOfPages()}`, 180, 285);
+
+    doc.save(`citylearn_mitigation_plan_${ev?.id || "event"}_${new Date().toISOString().split("T")[0]}.pdf`);
   };
 
   if (isLoading) {
@@ -126,7 +268,7 @@ export default function Page() {
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-border pb-8">
           <div className="space-y-2">
             <h1 className="page-heading text-foreground">
               Response Strategies
@@ -135,6 +277,13 @@ export default function Page() {
               Neural Intelligence Recommendation Matrix for Containment and Optimization
             </p>
           </div>
+          <button
+            onClick={downloadPlanReport}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-dark font-semibold rounded-xl text-xs border border-primary/20 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">download</span>
+            Download Mitigation Plan
+          </button>
         </div>
 
         {/* Main Bento Layout */}

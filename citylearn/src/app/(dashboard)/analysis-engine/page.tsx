@@ -678,13 +678,15 @@ export default function Page() {
                     max="5"
                     step="0.01"
                   />
-                  <div className="flex justify-between font-mono text-[9px] text-muted-foreground uppercase">
-                    <span>0</span>
-                    <span>1K</span>
-                    <span>10K</span>
-                    <span>50K</span>
-                    <span>100K</span>
-                    <span>100K+</span>
+                  <div className="relative w-full h-3 font-mono text-[9px] text-muted-foreground uppercase px-[10px] mt-1.5">
+                    <div className="relative w-full h-full">
+                      <span className="absolute left-[0%] -translate-x-1/2">0</span>
+                      <span className="absolute left-[20%] -translate-x-1/2">1K</span>
+                      <span className="absolute left-[40%] -translate-x-1/2">10K</span>
+                      <span className="absolute left-[60%] -translate-x-1/2">50K</span>
+                      <span className="absolute left-[80%] -translate-x-1/2">100K</span>
+                      <span className="absolute left-[100%] -translate-x-1/2">100K+</span>
+                    </div>
                   </div>
                 </div>
               </div>
