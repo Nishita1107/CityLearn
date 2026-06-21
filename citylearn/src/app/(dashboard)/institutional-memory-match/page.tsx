@@ -45,8 +45,7 @@ export default function Page() {
     ? Math.min(1.0, (selectedEvent.resolution_time || 120) / 480) 
     : 0.5;
 
-  // Radar points mapped based on outer radius = 70 (centered at 100, 100)
-  const radarPoints = `100,${(100 - 70 * val_density).toFixed(1)} ${(100 + 70 * val_speed).toFixed(1)},100 100,{(100 + 70 * val_risk).toFixed(1)} ${(100 - 70 * val_duration).toFixed(1)},100`;
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -79,40 +78,77 @@ export default function Page() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Similarity Radar */}
-        <div className="lg:col-span-5 bg-white border border-border rounded-xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[400px]">
-          <h3 className="w-full text-left font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">hub</span> Similarity Radar
-          </h3>
+        {/* Left Column: Selected Match Details & Metrics */}
+        <div className="lg:col-span-5 bg-white border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[400px]">
+          <div>
+            <h3 className="font-display text-base font-bold text-foreground mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">analytics</span> Match Details & Metrics
+            </h3>
 
-          {/* Selected Event Details Panel */}
-          <div className="w-full mb-4 px-3 py-2 bg-slate-50 border border-border rounded-lg text-xs">
-            <span className="font-semibold text-muted-foreground block text-[9px] uppercase tracking-wider">Viewing Match Radar</span>
-            <span className="font-bold text-foreground block truncate">{selectedEvent ? selectedEvent.event_name : "No match selected"}</span>
-            <span className="text-[10px] text-muted-foreground block">{selectedEvent ? `${selectedEvent.location} • Match Score: ${selectedEvent.similarity_score.toFixed(1)}%` : ""}</span>
+            {/* Selected Event Details Panel */}
+            <div className="w-full mb-6 px-4 py-3 bg-slate-50 border border-border rounded-lg text-xs space-y-1">
+              <span className="font-semibold text-muted-foreground block text-[9px] uppercase tracking-wider">Currently Selected Case</span>
+              <span className="font-bold text-foreground block truncate text-sm">{selectedEvent ? selectedEvent.event_name : "No match selected"}</span>
+              <span className="text-[11px] text-muted-foreground block">{selectedEvent ? selectedEvent.location : ""}</span>
+            </div>
+
+            {/* Visual Bars for Key Attributes */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground font-medium">Traffic Density Impact</span>
+                  <span className="text-foreground font-bold">{selectedEvent ? `${Math.round(val_density * 100)}%` : "—"}</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-primary h-full transition-all duration-500" 
+                    style={{ width: selectedEvent ? `${val_density * 100}%` : "0%" }}
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground font-medium">Response Speed (Efficiency)</span>
+                  <span className="text-foreground font-bold">{selectedEvent ? `${Math.round(val_speed * 100)}%` : "—"}</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-teal-500 h-full transition-all duration-500" 
+                    style={{ width: selectedEvent ? `${val_speed * 100}%` : "0%" }}
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground font-medium">Congestion Risk Severity</span>
+                  <span className="text-foreground font-bold">{selectedEvent ? `${Math.round(val_risk * 100)}%` : "—"}</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-amber-500 h-full transition-all duration-500" 
+                    style={{ width: selectedEvent ? `${val_risk * 100}%` : "0%" }}
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground font-medium">Incident Duration Index</span>
+                  <span className="text-foreground font-bold">{selectedEvent ? `${Math.round(val_duration * 100)}%` : "—"}</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-blue-500 h-full transition-all duration-500" 
+                    style={{ width: selectedEvent ? `${val_duration * 100}%` : "0%" }}
+                  ></div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="relative w-full h-64 flex items-center justify-center">
-            <svg className="w-full h-full max-w-[280px]" viewBox="0 0 200 200">
-              {/* Concentric Grid Lines */}
-              <circle className="stroke-slate-200 fill-none" cx="100" cy="100" r="70" strokeWidth="1"></circle>
-              <circle className="stroke-slate-200 fill-none" cx="100" cy="100" r="52.5" strokeWidth="1"></circle>
-              <circle className="stroke-slate-200 fill-none" cx="100" cy="100" r="35" strokeWidth="1"></circle>
-              <circle className="stroke-slate-200 fill-none" cx="100" cy="100" r="17.5" strokeWidth="1"></circle>
-              <line className="stroke-slate-200" x1="100" x2="100" y1="30" y2="170" strokeWidth="1"></line>
-              <line className="stroke-slate-200" x1="30" x2="170" y1="100" y2="100" strokeWidth="1"></line>
-              
-              {/* Radar Area Polygon */}
-              <polygon className="fill-primary/20 stroke-primary" points={radarPoints} strokeWidth="2"></polygon>
-              
-              {/* Labels placed inside viewBox margins to avoid clipping */}
-              <text className="fill-muted-foreground text-[8px] font-bold uppercase tracking-wider font-sans" textAnchor="middle" x="100" y="20">Density</text>
-              <text className="fill-muted-foreground text-[8px] font-bold uppercase tracking-wider font-sans" textAnchor="start" x="178" y="103">Speed</text>
-              <text className="fill-muted-foreground text-[8px] font-bold uppercase tracking-wider font-sans" textAnchor="middle" x="100" y="188">Risk</text>
-              <text className="fill-muted-foreground text-[8px] font-bold uppercase tracking-wider font-sans" textAnchor="end" x="22" y="103">Duration</text>
-            </svg>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center">
+          <div className="mt-6 grid grid-cols-2 gap-4 w-full text-center">
             <div className="bg-slate-50 border border-border rounded p-3">
               <span className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Similarity Score</span>
               <span className="text-primary font-bold text-lg">
