@@ -8,8 +8,7 @@
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)](#)
 [![ML](https://img.shields.io/badge/ML-CatBoost%20%7C%20Scikit--Learn-orange)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#-license)
-
-🔗 **Live Demo:** https://city-learn.vercel.app
+[![Live Demo](https://img.shields.io/badge/Live-Demo-000?logo=vercel&logoColor=white)](https://city-learn.vercel.app)
 
 ---
 
