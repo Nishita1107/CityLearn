@@ -6,7 +6,6 @@
 
 [![Frontend](https://img.shields.io/badge/frontend-Next.js-black)](#)
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)](#)
-[![Hosted on](https://img.shields.io/badge/backend%20hosted%20on-🤗%20Hugging%20Face%20Spaces-yellow)](#)
 [![ML](https://img.shields.io/badge/ML-CatBoost%20%7C%20Scikit--Learn-orange)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#-license)
 
