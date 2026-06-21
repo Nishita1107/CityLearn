@@ -323,51 +323,6 @@ Interactive Swagger docs are available at `/docs` once the backend is running.
 
 ---
 
-## ☁️ Deployment
-
-This project is designed to be deployed as two independent services:
-
-### Backend → [Hugging Face Spaces](https://huggingface.co/spaces)
-
-The backend is deployed as a **Docker Space** on Hugging Face.
-
-1. Create a new **Space** → choose the **Docker** SDK.
-2. Push/upload the contents of the `backend/` folder to the Space repo (or point the Space to this GitHub repo).
-3. Add a `Dockerfile` in `backend/` (Spaces expect the app to listen on port `7860` by default):
-
-   ```dockerfile
-   FROM python:3.11-slim
-
-   WORKDIR /app
-   COPY requirements.txt .
-   RUN pip install --no-cache-dir -r requirements.txt
-
-   COPY . .
-
-   EXPOSE 7860
-   CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
-   ```
-
-4. Commit/push — the Space will build and start the FastAPI app automatically.
-5. Your backend will be live at:
-   `https://<your-username>-<space-name>.hf.space`
-
-> Note: Hugging Face Spaces sleep after a period of inactivity on the free tier — the first request after idling may take a few seconds to wake up.
-
-### Frontend → [Vercel](https://vercel.com)
-
-1. Import this repository into Vercel.
-2. Set the **Root Directory** to `citylearn`.
-3. Add environment variables in the Vercel dashboard:
-   - `NEXT_PUBLIC_API_URL` → your Hugging Face Space URL
-   - `MONGO_URI` → your MongoDB connection string
-4. Deploy.
-
-
-> 💡 After deploying both services, update the placeholder links at the top of this README with the live demo and deployment URLs.
-
----
-
 ## 📦 Sample Recommendation Output
 
 ```json
@@ -395,22 +350,12 @@ CityLearn helps traffic authorities:
 - Learn from past incidents
 - Make data-driven decisions
 
----
-
-## 🔮 Future Enhancements
-
-- Real-Time Traffic Feed Integration
-- Dynamic Diversion Planning
-- Officer Allocation Optimization
-- Congestion Heatmaps
-- LLM-Powered Traffic Assistant
-- Predictive City-Wide Traffic Simulation
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License — feel free to use, modify, and build on it.
+This project is licensed under the MIT License.
 
 ---
 
