@@ -1,14 +1,24 @@
-# 🏙️ CityLearn
+<div align="center">
+  <img src="logo/screen.png" alt="CityLearn Logo" width="200"/>
+  
+  # **CityLearn**
+  
+  *Cities forget. CityLearn remembers.*
+  
+  **CityLearn** is an AI-powered traffic institutional memory system designed for event-driven congestion management, capturing and analyzing historical traffic data to help cities predict and prevent future gridlock.
+</div>
 
-### Cities Forget. CityLearn Remembers.
-
-**AI-Powered Traffic Institutional Memory System for Event-Driven Congestion Management**
+---
+<div align="center">
 
 [![Frontend](https://img.shields.io/badge/frontend-Next.js-black)](#)
 [![Backend](https://img.shields.io/badge/backend-FastAPI-009688)](#)
 [![ML](https://img.shields.io/badge/ML-CatBoost%20%7C%20Scikit--Learn-orange)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue)](#-license)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-000?logo=vercel&logoColor=white)](https://city-learn.vercel.app)
+
+</div>
+
 
 ---
 
